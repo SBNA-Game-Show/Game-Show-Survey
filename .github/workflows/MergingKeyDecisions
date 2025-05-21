@@ -1,4 +1,4 @@
-name: Combine Team Key Decisions
+name: MergingKeyDecisions
 
 on:
   push:

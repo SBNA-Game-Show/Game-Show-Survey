@@ -15,16 +15,16 @@ jobs:
 
       - name: 🧠 Merge all group Key Decisions into main file
         run: |
-          echo "## Combined Key Decisions (Auto-generated)" > "Key Decisions.txt"
-          echo "" >> "Key Decisions.txt"
+          echo "## Combined Key Decisions (Auto-generated)" > "Key Decisions"
+          echo "" >> "Key Decisions"
 
           for dir in "404-Not-Found" "Ninja" "PathFinder" "Sankalp"
           do
-            if [ -f "$dir/Key Decisions.txt" ]; then
-              echo "### Key Decisions from $dir" >> "Key Decisions.txt"
-              echo "" >> "Key Decisions.txt"
-              cat "$dir/Key Decisions.txt" >> "Key Decisions.txt"
-              echo -e "\n---\n" >> "Key Decisions.txt"
+            if [ -f "$dir/Key Decisions" ]; then
+              echo "### Key Decisions from $dir" >> "Key Decisions"
+              echo "" >> "Key Decisions"
+              cat "$dir/Key Decisions" >> "Key Decisions"
+              echo -e "\n---\n" >> "Key Decisions"
             fi
           done
 
@@ -32,6 +32,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add "Key Decisions.txt"
-          git commit -m "🔁 Auto-merged group Key Decisions into root Key Decisions.txt" || echo "No changes to commit"
+          git add "Key Decisions"
+          git commit -m "🔁 Auto-merged group Key Decisions into root Key Decisions" || echo "No changes to commit"
           git push origin Documents

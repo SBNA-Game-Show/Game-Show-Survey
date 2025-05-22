@@ -1,4 +1,4 @@
-name: MergedKeyDecisions
+name: MergedKeyDecisionswithTimestamp
 
 on:
   push:
@@ -13,25 +13,44 @@ jobs:
       - name: 📥 Checkout repo
         uses: actions/checkout@v3
 
-      - name: 🧠 Merge all group Key Decisions into main file
+      - name: 🔄 Prepare merged Key Decisions with persistent timestamps
         run: |
-          echo "## Combined Key Decisions (Auto-generated)" > "Key Decisions"
-          echo "" >> "Key Decisions"
+          touch "Key Decisions"  # Ensure it exists if first time
+          cp "Key Decisions" previous_merge.txt
+
+          echo "## Combined Key Decisions (Auto-generated)" > new_merge.txt
+          echo "Last updated: $(date -u)" >> new_merge.txt
+          echo "" >> new_merge.txt
 
           for dir in "404-Not-Found" "Ninja" "PathFinder" "Sankalp"
           do
             if [ -f "$dir/Key Decisions" ]; then
-              echo "### Key Decisions from $dir" >> "Key Decisions"
-              echo "" >> "Key Decisions"
-              cat "$dir/Key Decisions" >> "Key Decisions"
-              echo -e "\n---\n" >> "Key Decisions"
+              echo "### Key Decisions from $dir" >> new_merge.txt
+              echo "" >> new_merge.txt
+
+              while IFS= read -r line; do
+                clean_line=$(echo "$line" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+                if [ ! -z "$clean_line" ]; then
+                  # Check if line already exists in previous merge with a timestamp
+                  existing=$(grep -F "$clean_line" previous_merge.txt || true)
+                  if [ ! -z "$existing" ]; then
+                    echo "$existing" >> new_merge.txt
+                  else
+                    echo "[$(date -u +'%Y-%m-%d')] $clean_line" >> new_merge.txt
+                  fi
+                fi
+              done < "$dir/Key Decisions"
+
+              echo -e "\n---\n" >> new_merge.txt
             fi
           done
+
+          mv new_merge.txt "Key Decisions"
 
       - name: ✅ Commit merged Key Decisions
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add "Key Decisions"
-          git commit -m "🔁 Auto-merged group Key Decisions into root Key Decisions" || echo "No changes to commit"
+          git commit -m "🔁 Persistently merged Key Decisions with original timestamps" || echo "No changes to commit"
           git push origin Documents

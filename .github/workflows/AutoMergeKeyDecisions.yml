@@ -16,6 +16,7 @@ jobs:
       - name: 🧠 Merge all group Key Decisions into main file
         run: |
           echo "## Combined Key Decisions (Auto-generated)" > "Key Decisions"
+          echo "**Last updated:** $(date -u)" >> "Key Decisions"
           echo "" >> "Key Decisions"
 
           for dir in "404-Not-Found" "Ninja" "PathFinder" "Sankalp"

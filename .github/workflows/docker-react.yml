@@ -1,0 +1,24 @@
+name: React Docker CI
+
+on:
+  push:
+    branches: [404-Not-Found---Integration-&-Testing]
+  pull_request:
+    branches: [404-Not-Found---Integration-&-Testing]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: ⬇️ Checkout repository
+        uses: actions/checkout@v3
+
+      - name: 🐳 Build Docker image
+        run: docker build -t sbna-frontend .
+
+      - name: 🚀 Run Docker container
+        run: docker run -d -p 3000:3000 sbna-frontend
+
+      - name: 📋 Show running containers
+        run: docker ps

@@ -10,15 +10,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📥 Checkout repository
+      - name: 📥 Checkout repo
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0  # Needed to access commit history
 
-      - name: 🧠 Merge all group Key Decisions into one file with per-team timestamps
+      - name: 🧠 Merge all group Key Decisions into main file
         run: |
           echo "## Combined Key Decisions (Auto-generated)" > "Key Decisions"
-          echo "Last updated: $(date -u)" >> "Key Decisions"
           echo "" >> "Key Decisions"
 
           for dir in "404-Not-Found" "Ninja" "PathFinder" "Sankalp"
@@ -26,13 +23,7 @@ jobs:
             if [ -f "$dir/Key Decisions" ]; then
               echo "### Key Decisions from $dir" >> "Key Decisions"
               echo "" >> "Key Decisions"
-
-              while IFS= read -r line; do
-                if [ ! -z "$line" ]; then
-                  echo "[$(date -u +'%Y-%m-%d %H:%M UTC')] $line" >> "Key Decisions"
-                fi
-              done < "$dir/Key Decisions"
-
+              cat "$dir/Key Decisions" >> "Key Decisions"
               echo -e "\n---\n" >> "Key Decisions"
             fi
           done
@@ -42,5 +33,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add "Key Decisions"
-          git commit -m "🔁 Auto-merged group Key Decisions with timestamps" || echo "No changes to commit"
+          git commit -m "🔁 Auto-merged group Key Decisions into root Key Decisions" || echo "No changes to commit"
           git push origin Documents

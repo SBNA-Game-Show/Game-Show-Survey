@@ -1,5 +1,6 @@
 import difflib
 from collections import defaultdict, Counter
+import json
 
 def normalize(text):
     return text.lower().strip()
@@ -44,26 +45,10 @@ def process_survey_data(survey_data):
 
     return final_output
 
-sample_data = [
-    {"question": "Name a common Sanskrit greeting or salutation.", "answer": "Namaste"},
-    {"question": "Name a common Sanskrit greeting or salutation.", "answer": "namaskara"},
-    {"question": "Name a Sanskrit word related to family relationships.", "answer": "mata"},
-    {"question": "Name a Sanskrit word related to family relationships.", "answer": "pita"},
-    {"question": "Name a Sanskrit term for a natural element (earth, water, fire, etc.).", "answer": "Agni"},
-    {"question": "Name a Sanskrit term for a natural element (earth, water, fire, etc.).", "answer": "jal"},
-    {"question": "Name a Sanskrit word for an emotion or feeling.", "answer": "Prema"},
-    {"question": "Name a Sanskrit word for an emotion or feeling.", "answer": "shoka"},
-    {"question": "Name a Sanskrit term for a body part.", "answer": "Hasta"},
-    {"question": "Name a Sanskrit term for a body part.", "answer": "pada"},
-    {"question": "Name a Sanskrit word for a number.", "answer": "eka"},
-    {"question": "Name a Sanskrit word for a number.", "answer": "dva"},
-    {"question": "Name a Sanskrit word for an animal.", "answer": "Simha"},
-    {"question": "Name a Sanskrit word for an animal.", "answer": "mriga"},
-    {"question": "Name a color term in Sanskrit.", "answer": "nila"},
-    {"question": "Name a color term in Sanskrit.", "answer": "rakta"},
-]
+with open("sanskrit_survey_data.json", "r", encoding="utf-8") as f:
+    data = json.load(f)
 
-results = process_survey_data(sample_data)
+results = process_survey_data(data)
 
 print("\nSurvey Results:")
 for question, answers in results.items():

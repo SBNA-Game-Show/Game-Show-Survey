@@ -54,8 +54,6 @@ const addQuestions = asyncHandler(async (req, res) => {
     );
 });
 
-<<<<<<< Updated upstream
-=======
 //User requests one question
 const updateQuestionById = asyncHandler(async (req, res) => {
   const { questionID, question, questionCategory, questionType, questionLevel } = req.body
@@ -99,7 +97,6 @@ const deleteQuestionById= asyncHandler(async(req, res) => {
 });
 
 // User requests the questions
->>>>>>> Stashed changes
 const getQuestion = asyncHandler(async (req, res) => {
   /*
   FUTURE TO-DO:

@@ -8,7 +8,7 @@ const userSchema = new Schema(
   {
     username: String,
     totalQuestionsAnswered: { type: Number, default: 0 },
-    answers: [userAnswerSchema],
+    answerCount: { type: Number, default: 0 }
   },
   { timestamps: true }
 );

@@ -18,5 +18,10 @@ export const QUESTION_LEVEL = Object.freeze({
   BEGINNER: "Beginner",
   INTERMEDIATE: "Intermediate",
   ADVANCED: "Advanced",
-});
+})
 
+// Enums for Role-based access
+export const USER_ROLE = Object.freeze({
+  ADMIN: "Admin",
+  USER: "User"
+});

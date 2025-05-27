@@ -54,6 +54,52 @@ const addQuestions = asyncHandler(async (req, res) => {
     );
 });
 
+<<<<<<< Updated upstream
+=======
+//User requests one question
+const updateQuestionById = asyncHandler(async (req, res) => {
+  const { questionID, question, questionCategory, questionType, questionLevel } = req.body
+  const queryQuestion = await Question.findByIdAndUpdate(
+    questionID,
+    {
+      $set: {
+        question: question,
+        questionCategory: questionCategory,
+        questionLevel: questionLevel,
+        questionType: questionType,
+      },
+    },
+    { new: true }
+  );
+
+  if(!queryQuestion) {
+    return res.status(404).json(new ApiError(404, "Specified Question Not Found"));
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, queryQuestion, "Question Updated Successfully"));
+});
+
+const deleteQuestionById= asyncHandler(async(req, res) => {
+  const{ questionID} = req.body
+  const question= await Question.deleteOne({_id:questionID },
+  )
+ 
+  if(question.length === 0) {
+    return res.status(404).json(new ApiError(404, "Specified Question Not Found"));
+  }
+ 
+  if(question.deletedCount === 0){
+    return res.status(404).json(new ApiError(404, "No questions were deleted"));
+  }
+  return res
+    .status(200)
+    .json(new ApiResponse(200, question, "Question Deleted Successfully"));
+});
+
+// User requests the questions
+>>>>>>> Stashed changes
 const getQuestion = asyncHandler(async (req, res) => {
   /*
   FUTURE TO-DO:
@@ -83,4 +129,4 @@ const getQuestion = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, questions, "Questions Retrieved Successfully"));
 });
-export { addQuestions, getQuestion };
+export { addQuestions, getQuestion, updateQuestionById, deleteQuestionById };

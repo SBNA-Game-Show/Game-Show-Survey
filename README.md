@@ -78,10 +78,10 @@ A minimal backend API for managing survey questions and answers, built with Node
    "answers": [
       {"answerId": "a1",
       "answer": "Hello",
-      "numberOfResponses": {"$numberInt": "10"}},
+      "responseCount": {"$numberInt": "10"}},
       {"answerId": "a2",
       "answer": "Hey",
-      "numberOfResponses": {"$numberInt": "5"}}
+      "responseCount": {"$numberInt": "5"}}
    ],
    "timeStamp": true
 }
@@ -249,7 +249,7 @@ src/
   - `Grammar`
   - `Vocabulary`
   - `Literature`
- - Question levels are:
+- Question levels are:
   - `Beginner`
   - `Intermediate`
   - `Advanced`

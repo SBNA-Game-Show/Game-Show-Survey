@@ -13,6 +13,7 @@ A minimal backend API for managing survey questions and answers, built with Node
 - API key protection for endpoints
 - Modular code structure
 - Async error handling
+- Admin routing for authorizing requests
 
 ---
 
@@ -61,7 +62,61 @@ A minimal backend API for managing survey questions and answers, built with Node
 
 ---
 
+## Data Structures
+
+### Question Collection Sample
+
+**Question Collection Layout**
+```
+{
+   "_id": {"$oid": "68373facb384c8b16146c183"},
+   "question": "What is the word for fire in Sanskrit?",
+   "questionType": "Input",
+   "questionCategory": "Vocabulary",
+   "questionLevel": "Beginner",
+   "timesSkipped": {"$numberInt":"5"},
+   "answers": [
+      {"answerId": "a1",
+      "answer": "Hello",
+      "numberOfResponses": {"$numberInt": "10"}},
+      {"answerId": "a2",
+      "answer": "Hey",
+      "numberOfResponses": {"$numberInt": "5"}}
+   ],
+   "timeStamp": true
+}
+```
+
+**User Collection Layout**
+```
+{
+   "_id": {"$oid": "68374212b384c8b16146c185"},
+   "userId": "u1",
+   "userName": "Sample",
+   "userEmail": "sample@email.com",
+   "Answers": [
+      {"answerId": "a1"},
+      {"answerId": "a2"}
+   ]
+}
+
+```
+
+**Admin Collection Layout**
+```
+{
+   "_id": {"$oid": "68374320b384c8b16146c187"},
+   "userId": "ad1",
+   "userName": "Sammy",
+   "userEmail": "sammy@email.com",
+   "password": "blahblah",
+   "role": "Super Admin(created from backend")"
+}
+
+```
+
 ## API Endpoint Use Guide
+Below is a list of endpoints and all the information needed to use them.
 
 ### Admin Route
 
@@ -69,21 +124,21 @@ A minimal backend API for managing survey questions and answers, built with Node
 Submit an array of questions to the database using `addQuestions` method:
   - `POST /api/v1/admin/surveyQuestions`
   - Headers: `x-api-key: <API_KEY>`
-  - Body:
+  - Sample Body:
     ```json
     {
-       [
+      "questions": [
           {
             "question": "What is your favorite color?",
             "questionType": "Input",
-            "questionCategory": "Language",
+            "questionCategory": "Vocabulary",
             "questionLevel": "Beginner"
           },
           {
-            "question": "What is your favorite color?",
+            "question": "Name a yoga pose.",
             "questionType": "Input",
             "questionCategory": "Language",
-            "questionLevel": "Beginner"
+            "questionLevel": "Intermediate"
           }
        ]
     }
@@ -94,16 +149,60 @@ Request all questions and their respective answers using `getQuestion` method:
   - `GET /api/v1/admin/survey`
   - Headers: `x-api-key: <API_KEY>`
 
-### Answers
+- **Update Question By Id**
+Request to retrieve a specific question and modify its properties with `updateQuestionById` method:
+  - `PUT /api/v1/admin/`
+  - Headers: `x-api-key: <API_KEY>`
+  - Sample Body:
+    ```json
+    {
+     "questionID": "68364a7434e454278dd83319",
+     "question": " Name something difficult about learning French. ",
+     "questionType": "Input",
+     "questionCategory": "Grammar",
+     "questionLevel": "Beginner"
+    }
+    ```
+
+- **Delete Question By Id**
+Request to delete a question according to its Id value using `deleteQuestionById` method:
+  - `DELETE /api/v1/admin/`
+  - Headers: `x-api-key: <API_KEY>`
+  - Sample Body:
+    ```json
+    {
+     "questionID": "68364a7434e454278dd83319",
+    }
+    ```
+
+- **Delete Answer By Id**
+Request to delete an answer according to its Id value using `deleteAnswerById` method:
+  - `DELETE /api/v1/admin/answer`
+  - Headers: `x-api-key: <API_KEY>`
+  - Sample Body:
+    ```json
+    {
+     "questionID": "68364a7434e454278dd83319",
+     "answerID": "68364e6d259fbf39db9809d8"
+    }
+    ```
+    
+### Survey Route
+
+- **Get Questions**
+Request without admin access that retrieves all questions using `getQuestion` method:
+  - `GET /api/v1/survey/`
+  - Headers: `x-api-key: <API_KEY>`
 
 - **Add Answer to Question**
-  - `PUT /api/v1/answers/`
+Request that inserts user answers into their respective questions with `addAnswerToQuestion` method:
+  - `PUT /api/v1/survey/`
   - Headers: `x-api-key: <API_KEY>`
-  - Body:
+  - Sample Body:
     ```json
     {
       "questionID": "683487e92b1ce69eed66ecbd",
-      "answerTest": "Raja"
+      "answer": "Raja"
     }
     ```
 
@@ -114,18 +213,22 @@ Request all questions and their respective answers using `getQuestion` method:
 ```
 src/
   controllers/
+    admin.controller.js
     answer.controller.js
+    user.controller.js
     question.controller.js
   db/
     index.js
   middlewares/
     apiKey.js
+    isAdmin.js
   models/
+    admin.model.js
     question.model.js
     user.model.js
   routes/
-    answer.route.js
-    question.routes.js
+    admin.route.js
+    survey.route.js
   utils/
     ApiError.js
     ApiResponse.js
@@ -142,7 +245,7 @@ src/
 - Question types are defined in `constants.js`:
   - `Mcq`
   - `Input`
-- Question Categories are:
+- Question Categories are (more coming):
   - `Grammar`
   - `Vocabulary`
   - `Literature`
@@ -152,7 +255,6 @@ src/
   - `Advanced`
 - All endpoints require a valid API key via the `x-api-key` header.
 - Pagination is set to 10 questions per page.
-- Answers functionality is a stub and can be extended.
 
 ---
 

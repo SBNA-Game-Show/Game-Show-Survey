@@ -61,25 +61,37 @@ A minimal backend API for managing survey questions and answers, built with Node
 
 ---
 
-## API Endpoints
+## API Endpoint Use Guide
 
-### Questions
+### Admin Route
 
-- **Add Question**
-  - `POST /api/v1/questions/surveyQuestions`
+- **Add Questions**
+Submit an array of questions to the database using `addQuestions` method:
+  - `POST /api/v1/admin/surveyQuestions`
   - Headers: `x-api-key: <API_KEY>`
   - Body:
     ```json
     {
-      "question": "What is your favorite color?",
-      "questionType": "Input",
-      "questionCategory": "Language",
-      "questionLevel": "Beginner"
+       [
+          {
+            "question": "What is your favorite color?",
+            "questionType": "Input",
+            "questionCategory": "Language",
+            "questionLevel": "Beginner"
+          },
+          {
+            "question": "What is your favorite color?",
+            "questionType": "Input",
+            "questionCategory": "Language",
+            "questionLevel": "Beginner"
+          }
+       ]
     }
     ```
 
-- **Get Questions (paginated)**
-  - `GET /api/v1/questions/?page=1`
+- **Get Questions and Answers**
+Request all questions and their respective answers using `getQuestion` method:
+  - `GET /api/v1/admin/survey`
   - Headers: `x-api-key: <API_KEY>`
 
 ### Answers

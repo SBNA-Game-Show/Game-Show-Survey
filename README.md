@@ -94,7 +94,7 @@ A minimal backend API for managing survey questions and answers, built with Node
    "userId": "u1",
    "userName": "Sample",
    "userEmail": "sample@email.com",
-   "Answers": [
+   "answers": [
       {"answerId": "a1"},
       {"answerId": "a2"}
    ]

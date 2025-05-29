@@ -4,7 +4,7 @@
 
 Entity Relation Diagram
 
-![Picture of Entity Relation Diagram featuring Question and Answer](./SBquestionnaire-ERD.png)
+![Picture of Entity Relation Diagram featuring Question and Answer](./ERD v4 may28.png)
 
 **By: Austin Sinclair, Ayushi Patel – Team Pathfinder**
 

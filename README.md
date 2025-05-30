@@ -137,7 +137,7 @@ Submit an array of questions to the database using `addQuestions` method:
           {
             "question": "Name a yoga pose.",
             "questionType": "Input",
-            "questionCategory": "Language",
+            "questionCategory": "Grammar",
             "questionLevel": "Intermediate"
           }
        ]

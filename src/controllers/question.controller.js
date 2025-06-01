@@ -2,6 +2,7 @@ import { Question } from "../models/question.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import { toSentenceCase } from "../utils/stringModify.js";
 
 /*
   ROUTE METHOD FOR
@@ -41,7 +42,7 @@ const addQuestions = asyncHandler(async (req, res) => {
     }
 
     // Step 6: Normalize question text to avoid case-based duplicates
-    const normalizedQuestion = question.toLowerCase().trim();
+    const normalizedQuestion = toSentenceCase(question).trim();
     // Step 7: Check if the question already exists in the DB
     const alreadyExists = await Question.findOne({
       question: normalizedQuestion,

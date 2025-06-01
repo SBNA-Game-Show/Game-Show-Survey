@@ -1,0 +1,38 @@
+name: 🔁 Postman Integration Tests
+
+on:
+  push:
+    branches:
+      - backend-*
+
+jobs:
+  api-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: ⬇️ Checkout Code
+        uses: actions/checkout@v3
+
+      - name: 🧪 Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: 📦 Install Backend Dependencies
+        run: |
+          cd backend
+          npm install
+
+      - name: 🟢 Start Backend Server
+        run: |
+          cd backend
+          npm run start &  # replace with 'npm run dev' if needed
+          sleep 10         # give server time to spin up
+
+      - name: 🧪 Install Newman
+        run: npm install -g newman
+
+      - name: ✅ Run Postman Tests
+        run: |
+          newman run tests/survey-api-tests.json \
+            --env-var "apiKey=${{ secrets.ADMIN_API_KEY }}"

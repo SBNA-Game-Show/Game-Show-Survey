@@ -148,7 +148,6 @@ const updateQuestionById = asyncHandler(async (req, res) => {
         questionCategory: questionCategory,
         questionLevel: questionLevel,
         questionType: questionType,
-        timesSkipped: 0,
       },
     },
     { new: true }

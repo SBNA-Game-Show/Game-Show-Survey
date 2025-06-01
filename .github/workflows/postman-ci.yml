@@ -35,3 +35,4 @@ jobs:
         run: |
           newman run src/tests/survey-api-tests.json \
             --env-var "apiKey=${{ secrets.ADMIN_API_KEY }}"
+            --env-var "MONGODB_URI=${{secrets.MONGODB_URI}}"

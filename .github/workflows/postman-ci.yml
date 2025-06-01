@@ -19,14 +19,14 @@ jobs:
           node-version: 18
 
       - name: 📦 Install Backend Dependencies
-        run: |
-          npm install
+        run: npm install
 
       - name: 🟢 Start Backend Server
+        env:
+          MONGO_URI: ${{ secrets.MONGODB_URI }} 
         run: |
-          
-          npm run dev &  # replace with 'npm run dev' if needed
-          sleep 10         # give server time to spin up
+          npm run dev &   # or 'npm run start' depending on your setup
+          sleep 10        # Give server time to start
 
       - name: 🧪 Install Newman
         run: npm install -g newman
@@ -35,4 +35,3 @@ jobs:
         run: |
           newman run src/tests/survey-api-tests.json \
             --env-var "apiKey=${{ secrets.ADMIN_API_KEY }}"
-            --env-var "MONGODB_URI=${{secrets.MONGODB_URI}}"

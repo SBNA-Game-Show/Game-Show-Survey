@@ -21,12 +21,12 @@ jobs:
       - name: 📦 Install Backend Dependencies
         run: npm install
 
-      - name: 🟢 Start Backend Server
+      - name: 🟢 Start Backend Server with MongoDB URI
         env:
-          MONGO_URI: ${{ secrets.MONGODB_URI }} 
+          MONGO_URI: ${{ secrets.MONGODB_URI }}
         run: |
-          npm run dev &   # or 'npm run start' depending on your setup
-          sleep 10        # Give server time to start
+          npm run dev &  # or `npm start` if that's your script
+          sleep 10       # Wait for server to start
 
       - name: 🧪 Install Newman
         run: npm install -g newman

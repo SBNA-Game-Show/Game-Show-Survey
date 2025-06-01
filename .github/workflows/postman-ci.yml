@@ -25,7 +25,7 @@ jobs:
       - name: 🟢 Start Backend Server
         run: |
           
-          npm run start &  # replace with 'npm run dev' if needed
+          npm run dev &  # replace with 'npm run dev' if needed
           sleep 10         # give server time to spin up
 
       - name: 🧪 Install Newman

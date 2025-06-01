@@ -20,7 +20,6 @@ jobs:
 
       - name: 📦 Install Backend Dependencies
         run: |
-          cd backend
           npm install
 
       - name: 🟢 Start Backend Server

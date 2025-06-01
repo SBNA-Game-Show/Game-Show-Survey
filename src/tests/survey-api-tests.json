@@ -1,0 +1,113 @@
+{
+  "info": {
+    "name": "SBNA Survey API Tests - Auto Integration",
+    "_postman_id": "auto-uuid-1234",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+
+    {
+      "name": "[ADMIN] Add Question and Capture ID",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// Save questionID from response to use in later requests",
+              "let response = pm.response.json();",
+              "if (response.data && response.data.length > 0) {",
+              "  pm.globals.set(\"questionID\", response.data[0]._id);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "x-api-key", "value": "{{apiKey}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"questions\": [\n    {\n      \"question\": \"What is the capital of India?\",\n      \"questionType\": \"Input\",\n      \"questionCategory\": \"Literature\",\n      \"questionLevel\": \"Beginner\"\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8000/api/v1/admin/surveyQuestions",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8000",
+          "path": ["api", "v1", "admin", "surveyQuestions"]
+        }
+      }
+    },
+
+    {
+      "name": "[ADMIN] Update Question by ID",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "x-api-key", "value": "{{apiKey}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"questionID\": \"{{questionID}}\",\n  \"question\": \"Updated capital of India?\",\n  \"questionCategory\": \"Literature\",\n  \"questionLevel\": \"Beginner\",\n  \"questionType\": \"Input\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8000/api/v1/admin/",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8000",
+          "path": ["api", "v1", "admin", ""]
+        }
+      }
+    },
+
+    {
+      "name": "[USER] Submit Answer for Created Question",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "x-api-key", "value": "{{apiKey}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"questions\": [{ \"_id\": \"{{questionID}}\" }],\n  \"answers\": [{ \"answer\": \"New Delhi\" }]\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8000/api/v1/survey",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8000",
+          "path": ["api", "v1", "survey"]
+        }
+      }
+    },
+
+    {
+      "name": "[ADMIN] Delete Question by ID",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "x-api-key", "value": "{{apiKey}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"questionID\": \"{{questionID}}\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8000/api/v1/admin/",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8000",
+          "path": ["api", "v1", "admin", ""]
+        }
+      }
+    }
+
+  ]
+}

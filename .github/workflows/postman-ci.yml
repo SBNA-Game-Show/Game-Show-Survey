@@ -3,7 +3,7 @@ name: 🔁 Postman Integration Tests
 on:
   push:
     branches:
-      - backend-*
+      - 404-Not-Found---Integration-
 
 jobs:
   api-test:

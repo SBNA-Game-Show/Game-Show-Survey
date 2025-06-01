@@ -33,5 +33,5 @@ jobs:
 
       - name: ✅ Run Postman Tests
         run: |
-          newman run tests/survey-api-tests.json \
+          newman run src/tests/survey-api-tests.json \
             --env-var "apiKey=${{ secrets.ADMIN_API_KEY }}"

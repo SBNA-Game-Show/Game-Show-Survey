@@ -24,7 +24,7 @@ jobs:
 
       - name: 🟢 Start Backend Server
         run: |
-          cd backend
+          
           npm run start &  # replace with 'npm run dev' if needed
           sleep 10         # give server time to spin up
 

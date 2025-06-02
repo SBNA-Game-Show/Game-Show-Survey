@@ -68,22 +68,4 @@ const addAnswerToQuestion = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, null, "Question Updated with Answers"));
 });
 
-// ADMIN deletes the Answers by this method
-const deleteAnswerByID = asyncHandler(async (req, res) => {
-  if (!req.isAdminRoute) {
-    return res
-      .status(404)
-      .json(new ApiError(404, "Invalid Request. NO ADMIN privilege "));
-  }
-  const { questionID, answerID } = req.body;
-
-  const question = await Question.findByIdAndUpdate(
-    questionID,
-    { $pull: { answers: { _id: answerID } } },
-    { new: true }
-  );
-
-  return res.status(200).json(new ApiResponse(200, question));
-});
-
-export { addAnswerToQuestion, deleteAnswerByID };
+export { addAnswerToQuestion };

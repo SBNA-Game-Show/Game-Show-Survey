@@ -1,13 +1,8 @@
-const userAnswerSchema = new Schema({
-  question: { type: Schema.Types.ObjectId, ref: "Question", required: true },
-  response: { type: String, required: true },
-  answeredAt: { type: Date, default: Date.now },
-});
+import mongoose, { Schema } from "mongoose";
 
 const userSchema = new Schema(
   {
-    username: String,
-    totalQuestionsAnswered: { type: Number, default: 0 },
+    username: { type: String, required: false },
     answerCount: { type: Number, default: 0 }
   },
   { timestamps: true }

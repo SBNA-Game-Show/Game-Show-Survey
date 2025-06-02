@@ -5,7 +5,7 @@ import {
   QUESTION_TYPE,
 } from "../constants.js";
 
-const questionSchema = new Schema(
+const finalQuestionSchema = new Schema(
   {
     question: { type: String, required: true, trim: true },
     questionType: {

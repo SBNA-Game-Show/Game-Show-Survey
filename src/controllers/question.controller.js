@@ -88,12 +88,12 @@ const addQuestions = asyncHandler(async (req, res) => {
 const getQuestion = asyncHandler(async (req, res) => {
   // Step 1: Build base query to fetch selected fields (excluding answers)
   let query = Question.find({})
-    .select("question questionCategory questionLevel timesSkipped")
+    .select("question questionCategory questionLevel")
     .sort({ createdAt: -1 }); // shows the latest questions on top
 
-  // Step 2: If request is from ADMIN, include answers in the selection
+  // Step 2: If request is from ADMIN, include answers and timesSkipped in the selection
   if (req.isAdminRoute) {
-    query = query.select("answers"); // adds "answers" to the already selected fields
+    query = query.select("timesSkipped answers"); // adds "answers" to the already selected fields
   }
 
   // Step 3: Execute the query

@@ -27,10 +27,10 @@ app.use(express.static("public"));
 app.use(cookieParser());
 
 // -------- ROUTES --------
-import questionRouter from "./routes/question.routes.js";
-import answerRouter from "./routes/answer.route.js";
 
+import surveyRouter from "./routes/survey.route.js";
+import adminRouter from "./routes/admin.route.js";
 // routes handlers
-app.use("/api/v1/questions", questionRouter);
-app.use("/api/v1/answers", answerRouter);
+app.use("/api/v1/survey", surveyRouter);
+app.use("/api/v1/admin", adminRouter);
 export default app;

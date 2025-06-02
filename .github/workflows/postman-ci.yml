@@ -1,37 +1,223 @@
-name: 🔁 Postman Integration Tests
+{
+  "info": {
+    "name": "SBNA Survey API Tests - Compact & Complete",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
 
-on:
-  push:
-    branches:
-      - 404-Not-Found---Integration-
+    {
+      "name": "[ADMIN] Add Question & Capture ID",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "let data = pm.response.json().data;",
+              "if (data && data.length > 0) { pm.globals.set(\"questionID\", data[0]._id); }"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "x-api-key", "value": "{{apiKey}}" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"questions\": [{ \"question\": \"What is the capital of India?\", \"questionType\": \"Input\", \"questionCategory\": \"Literature\", \"questionLevel\": \"Beginner\" }] }"
+        },
+        "url": "http://localhost:8000/api/v1/admin/surveyQuestions"
+      }
+    },
 
-jobs:
-  api-test:
-    runs-on: ubuntu-latest
+    {
+      "name": "[ADMIN] Update Question (Valid)",
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "x-api-key", "value": "{{apiKey}}" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"questionID\": \"{{questionID}}\", \"question\": \"Updated capital of India?\", \"questionCategory\": \"Literature\", \"questionLevel\": \"Beginner\", \"questionType\": \"Input\" }"
+        },
+        "url": "http://localhost:8000/api/v1/admin/"
+      }
+    },
 
-    steps:
-      - name: ⬇️ Checkout Code
-        uses: actions/checkout@v3
+    {
+      "name": "[USER] Submit Valid Answer",
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "x-api-key", "value": "{{apiKey}}" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"questions\": [{ \"_id\": \"{{questionID}}\" }], \"answers\": [{ \"answer\": \"New Delhi\" }] }"
+        },
+        "url": "http://localhost:8000/api/v1/survey"
+      }
+    },
+    {
+      "name": "[ADMIN] Add Question - Missing Fields",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "x-api-key", "value": "{{apiKey}}" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"questions\": [{ \"question\": \"\", \"questionCategory\": \"\", \"questionLevel\": \"\" }] }"
+        },
+        "url": "http://localhost:8000/api/v1/admin/surveyQuestions"
+      }
+    },
 
-      - name: 🧪 Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
+    {
+      "name": "[ADMIN] Update with Invalid ID Format",
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "x-api-key", "value": "{{apiKey}}" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"questionID\": \"notAnObjectId\", \"question\": \"Invalid\", \"questionCategory\": \"Literature\", \"questionLevel\": \"Beginner\" }"
+        },
+        "url": "http://localhost:8000/api/v1/admin/"
+      }
+    },
 
-      - name: 📦 Install Backend Dependencies
-        run: npm install
+    {
+      "name": "[USER] Submit Mismatched Question/Answer Arrays",
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "x-api-key", "value": "{{apiKey}}" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"questions\": [{ \"_id\": \"{{questionID}}\" }], \"answers\": [] }"
+        },
+        "url": "http://localhost:8000/api/v1/survey"
+      }
+    },
 
-      - name: 🟢 Start Backend Server with MongoDB URI
-        env:
-          MONGODB_URI: ${{ secrets.MONGODB_URI }}
-        run: |
-          npm run dev &  # or `npm start` if that's your script
-          sleep 10       # Wait for server to start
+    {
+      "name": "[USER] Submit Answer to Non-existent Question",
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "x-api-key", "value": "{{apiKey}}" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"questions\": [{ \"_id\": \"65f0c555eeeeeeeeeeeeeeee\" }], \"answers\": [{ \"answer\": \"test\" }] }"
+        },
+        "url": "http://localhost:8000/api/v1/survey"
+      }
+    },
 
-      - name: 🧪 Install Newman
-        run: npm install -g newman
+    {
+      "name": "[ADMIN] Delete Answer with Invalid Answer ID",
+      "request": {
+        "method": "DELETE",
+        "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "x-api-key", "value": "{{apiKey}}" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"questionID\": \"{{questionID}}\", \"answerID\": \"invalidAnswerID\" }"
+        },
+        "url": "http://localhost:8000/api/v1/admin/answer"
+      }
+    },
 
-      - name: ✅ Run Postman Tests
-        run: |
-          newman run src/tests/survey-api-tests.json \
-            --env-var "apiKey=${{ secrets.ADMIN_API_KEY }}"
+    {
+      "name": "[ADMIN] Add Question With Empty Array",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "x-api-key", "value": "{{apiKey}}" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"questions\": [] }"
+        },
+        "url": "http://localhost:8000/api/v1/admin/surveyQuestions"
+      }
+    },
+
+    {
+      "name": "[ADMIN] GET Questions with Invalid API Key",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "x-api-key", "value": "wrong-key" }],
+        "url": "http://localhost:8000/api/v1/admin/survey"
+      }
+    },
+    {
+      "name": "[ADMIN] Delete Question",
+      "request": {
+        "method": "DELETE",
+        "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "x-api-key", "value": "{{apiKey}}" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"questionID\": \"{{questionID}}\" }"
+        },
+        "url": "http://localhost:8000/api/v1/admin/"
+      }
+    },
+
+    {
+      "name": "[ADMIN] Add Question - Missing Fields",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "x-api-key", "value": "{{apiKey}}" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"questions\": [{ \"question\": \"\", \"questionCategory\": \"\", \"questionLevel\": \"\" }] }"
+        },
+        "url": "http://localhost:8000/api/v1/admin/surveyQuestions"
+      }
+    },
+
+    {
+      "name": "[USER] Submit Blank Answer (Should Skip)",
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "x-api-key", "value": "{{apiKey}}" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"questions\": [{ \"_id\": \"{{questionID}}\" }], \"answers\": [{ \"answer\": \"  \" }] }"
+        },
+        "url": "http://localhost:8000/api/v1/survey"
+      }
+    },
+
+    {
+      "name": "[ADMIN] Update with Invalid ID",
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "x-api-key", "value": "{{apiKey}}" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"questionID\": \"12345\", \"question\": \"Invalid ID\", \"questionCategory\": \"Literature\", \"questionLevel\": \"Beginner\", \"questionType\": \"Input\" }"
+        },
+        "url": "http://localhost:8000/api/v1/admin/"
+      }
+    },
+
+    {
+      "name": "[ADMIN] Add Duplicate Question (Should Fail)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "x-api-key", "value": "{{apiKey}}" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"questions\": [{ \"question\": \"  what is the capital of india?  \", \"questionType\": \"Input\", \"questionCategory\": \"Literature\", \"questionLevel\": \"Beginner\" }] }"
+        },
+        "url": "http://localhost:8000/api/v1/admin/surveyQuestions"
+      }
+    },
+
+    {
+      "name": "[ADMIN] Add Question Without API Key",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"questions\": [{ \"question\": \"Unauthorized\", \"questionType\": \"Input\", \"questionCategory\": \"Literature\", \"questionLevel\": \"Beginner\" }] }"
+        },
+        "url": "http://localhost:8000/api/v1/admin/surveyQuestions"
+      }
+    }
+
+  ]
+}

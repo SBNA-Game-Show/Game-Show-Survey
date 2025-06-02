@@ -78,10 +78,12 @@ A minimal backend API for managing survey questions and answers, built with Node
    "answers": [
       {"answerId": "a1",
       "answer": "Hello",
-      "responseCount": {"$numberInt": "10"}},
+      "responseCount": {"$numberInt": "10"},
+      "isCorrect": false},
       {"answerId": "a2",
       "answer": "Hey",
-      "responseCount": {"$numberInt": "5"}}
+      "responseCount": {"$numberInt": "5"},
+      "isCorrect": false }
    ],
    "timeStamp": true
 }
@@ -124,7 +126,7 @@ Below is a list of endpoints and all the information needed to use them.
 Submit an array of questions to the database using `addQuestions` method:
   - `POST /api/v1/admin/surveyQuestions`
   - Headers: `x-api-key: <API_KEY>`
-  - Sample Body:
+  - Sample Body FOR SUBMITTING INPUT QUESTIONS:
     ```json
     {
       "questions": [
@@ -143,6 +145,48 @@ Submit an array of questions to the database using `addQuestions` method:
        ]
     }
     ```
+
+    - Sample Body FOR SUBMITTING MULTIPLE CHOICE QUESTIONS:
+    ```json
+    {
+      "questions": [
+          {
+            "question": "Which of these is a Sanskrit text?",
+            "questionType": "Mcq",
+            "questionCategory": "Literature",
+            "questionLevel": "Advanced",
+            "answers": [
+               {"answer": "Gita",
+               "isCorrect": true},
+               {"answer": "Dasha",
+               "isCorrect": false},
+               {"answer": "Karma",
+               "isCorrect": false},
+               {"answer": "Agni",
+               "isCorrect": false},
+             ]
+          },
+          {
+            "question": "Finish the yoga pose: Sun ____",
+            "questionType": "Mcq",
+            "questionCategory": "Culture",
+            "questionLevel": "Intermediate",
+            "answers": [
+               {"answer": "Sonata",
+               "isCorrect": false},
+               {"answer": "Solution",
+               "isCorrect": false},
+               {"answer": "Salutation",
+               "isCorrect": true},
+               {"answer": "Power",
+               "isCorrect": false},
+             ]
+          }
+       ]
+    }
+    ```
+
+    
 
 - **Get Questions and Answers**
 Request all questions and their respective answers using `getQuestion` method:

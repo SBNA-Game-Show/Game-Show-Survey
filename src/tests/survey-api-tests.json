@@ -12,7 +12,7 @@
           "listen": "test",
           "script": {
             "exec": [
-              "let data = pm.response.json().data;",
+              "var data = pm.response.json().data;",
               "if (data && data.length > 0) { pm.globals.set(\"questionID\", data[0]._id); }"
             ],
             "type": "text/javascript"

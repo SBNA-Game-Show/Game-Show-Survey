@@ -12,7 +12,7 @@ Entity Relation Diagram
 
 **Collections:** Questions, Answers
 
-**Rationale:** As of May 28th, we have a newer and more thorough ER diagram to present. This diagram reworks the idea of a separate Answer and Question collection, instead having answers directly embedded into the Question documents. 
+**Rationale:** As of June 2nd, we have a newer and more thorough ER diagram to present. This diagram reworks the idea of a separate Answer and Question collection, instead having answers directly embedded into the Question documents. We have also implemented a field to track whether a response is correct or not, to be updated by admins. 
 
 **Question**
 
@@ -25,6 +25,10 @@ Question Level will track difficulty levels, and allow survey users to answer qu
 Times Skipped is a field that will be used for analytics, allowing an admin team to see how often a certain questions is skipped. Maybe it is not a good question?
 
 Answers will be an array of answer documents, each with their own unique MongoDB ID, and the answer text. When a new answer enters the data base, a new answer document will be created. If an answer already exists, the responseCount field will increment by one. This functionality allows us to avoid a bloated database while still tracking unique answers and their respective counts.
+
+**FinalQuestion**
+
+This collection will be the same as the question collection, but will only include questions being used for the show and the responses that have been deemed correct. Score and Rank for each response will be stored in this collection?
 
 **Users**
 

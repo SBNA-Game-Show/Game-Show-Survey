@@ -23,7 +23,7 @@ jobs:
 
       - name: 🟢 Start Backend Server with MongoDB URI
         env:
-          MONGO_URI: ${{ secrets.MONGODB_URI }}
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
         run: |
           npm run dev &  # or `npm start` if that's your script
           sleep 10       # Wait for server to start

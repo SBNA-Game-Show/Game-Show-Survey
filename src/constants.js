@@ -11,6 +11,8 @@ export const QUESTION_CATEGORY = Object.freeze({
   VOCABULARY: "Vocabulary",
   LITERATURE: "Literature",
   GRAMMAR: "Grammar",
+  CULTURE: "Culture",
+  HISTORY: "History",
 });
 
 // Enums for question Level
@@ -19,4 +21,3 @@ export const QUESTION_LEVEL = Object.freeze({
   INTERMEDIATE: "Intermediate",
   ADVANCED: "Advanced",
 });
-

@@ -137,7 +137,7 @@ Submit an array of questions to the database using `addQuestions` method:
           {
             "question": "Name a yoga pose.",
             "questionType": "Input",
-            "questionCategory": "Language",
+            "questionCategory": "Grammar",
             "questionLevel": "Intermediate"
           }
        ]
@@ -182,11 +182,26 @@ Request to delete an answer according to its Id value using `deleteAnswerById` m
   - Sample Body:
     ```json
     {
-     "questionID": "68364a7434e454278dd83319",
-     "answerID": "68364e6d259fbf39db9809d8"
+    "questions":
+    [
+        {
+            "_id": "68387c69aae27e31ebbcfe29"
+        },
+        {
+            "_id": "68387c69aae27e31ebbcfe28"
+        }
+    ],
+    "answers": [
+        {
+            "answer": "Sunday"
+        },
+        {
+            "answer": "Red"
+        }
+    ]
     }
     ```
-    
+
 ### Survey Route
 
 - **Get Questions**

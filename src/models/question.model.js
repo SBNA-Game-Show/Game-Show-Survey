@@ -23,8 +23,13 @@ const questionSchema = new Schema(
       enum: Object.values(QUESTION_LEVEL),
       required: false,
     },
-    timesSkipped: { type: Number, required: false, min: 0 },
-    answers: [{ type: Schema.Types.ObjectId, ref: "Answer", required: false }], // Reference Answer Scehma
+    timesSkipped: { type: Number, required: false, min: 0, default: 0 },
+    answers: [
+      {
+        answer: { type: String, required: false, trim: true },
+        responseCount: { type: Number, required: false, min: 0, default: 0 },
+      },
+    ],
   },
   { timestamps: true }
 );

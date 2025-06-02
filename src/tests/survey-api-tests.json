@@ -217,7 +217,63 @@
         },
         "url": "http://localhost:8000/api/v1/admin/surveyQuestions"
       }
+    },
+    {
+      "name": "[ADMIN] Add Question - No Body Provided",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "x-api-key", "value": "{{apiKey}}" }],
+        "body": {
+          "mode": "raw",
+          "raw": ""
+        },
+        "url": "http://localhost:8000/api/v1/admin/surveyQuestions"
+      }
+    },{
+      "name": "[USER] Submit Answer with Extra Fields",
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "x-api-key", "value": "{{apiKey}}" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"questions\": [{ \"_id\": \"{{questionID}}\" }], \"answers\": [{ \"answer\": \"Delhi\", \"extra\": \"should be ignored\" }] }"
+        },
+        "url": "http://localhost:8000/api/v1/survey"
+      }
+    },
+    {
+      "name": "[ADMIN] Delete Question Without Body",
+      "request": {
+        "method": "DELETE",
+        "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "x-api-key", "value": "{{apiKey}}" }],
+        "body": {
+          "mode": "raw",
+          "raw": ""
+        },
+        "url": "http://localhost:8000/api/v1/admin/"
+      }
+    },
+    {
+      "name": "[ADMIN] Add Question With Duplicate ID",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "x-api-key", "value": "{{apiKey}}" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"questions\": [{ \"_id\": \"{{questionID}}\", \"question\": \"Duplicate ID?\", \"questionType\": \"Input\", \"questionCategory\": \"Literature\", \"questionLevel\": \"Beginner\" }] }"
+        },
+        "url": "http://localhost:8000/api/v1/admin/surveyQuestions"
+      }
+    },
+    {
+      "name": "[ADMIN] GET Questions Without API Key",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "http://localhost:8000/api/v1/admin/survey"
+      }
     }
+    
 
   ]
 }

@@ -37,4 +37,4 @@ const finalQuestionSchema = new Schema(
   { timestamps: true }
 );
 
-export const Question = mongoose.model("Question", questionSchema);
+export const FinalQuestion = mongoose.model("FinalQuestion", finalQuestionSchema);

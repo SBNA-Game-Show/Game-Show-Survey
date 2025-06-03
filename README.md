@@ -260,9 +260,18 @@ Request that inserts user answers into their respective questions with `addAnswe
   - Sample Body:
     ```json
     {
-      "questionID": "683487e92b1ce69eed66ecbd",
-      "answer": "Raja"
+        "questions": [
+          { "_id": "6838bccdb1be6e54cfee3c51" },
+          { "_id": "6838bccdb1be6e54cfee3c52" },
+          { "_id": "6838bccdb1be6e54cfee3c53" }
+        ],
+        "answers": [
+          { "answer": "svāgatam" },
+          { "answer": "kuTumba" },
+          { "answer": "agni" }
+        ]
     }
+
     ```
 
 ---

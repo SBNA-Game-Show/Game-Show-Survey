@@ -1,4 +1,4 @@
-export const DB_NAME = "database_Test_Ninja";
+export const DB_NAME = "database_Test_v3_idString";
 
 // Enums for question Type
 export const QUESTION_TYPE = Object.freeze({
@@ -20,4 +20,4 @@ export const QUESTION_LEVEL = Object.freeze({
   BEGINNER: "Beginner",
   INTERMEDIATE: "Intermediate",
   ADVANCED: "Advanced",
-})
+});

@@ -2,7 +2,8 @@ import { Question } from "../models/question.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-
+import { v4 as uuidv4 } from "uuid";
+import { QUESTION_TYPE } from "../constants.js";
 /*
   ROUTE METHOD FOR
   ADDING  QUESTIONS TO DATABASE
@@ -23,20 +24,24 @@ const addQuestions = asyncHandler(async (req, res) => {
   // Step 4: Initialize a list to store valid (non-duplicate) questions
   let validQuestions = [];
   for (const q of questions) {
-    const {
-      question,
-      questionType,
-      questionCategory,
-      questionLevel,
-    } = q;
+    const { question, questionType, questionCategory, questionLevel, answers } =
+      q;
 
     // Step 5: Check for missing required fields
     if (
-      [question, questionCategory, questionLevel].some(
+      [question, questionCategory, questionLevel, questionType].some(
         (field) => !field || field.trim() === ""
       )
     ) {
       throw new ApiError(400, "All fields are required for every question");
+    }
+    if (questionType === QUESTION_TYPE.MCQ) {
+      if (!Array.isArray(answers) || answers.length != 4) {
+        throw new ApiError(
+          "400",
+          "Question Type of MCQ must have 4 Answer options along with it"
+        );
+      }
     }
 
     // Step 6: Normalize question text to avoid case-based duplicates
@@ -51,18 +56,34 @@ const addQuestions = asyncHandler(async (req, res) => {
 
     // Step 8: Only add question to valid list if it's not a duplicate
     if (!alreadyExists) {
-      validQuestions.push({
+      const newQuestion = {
+        _id: uuidv4(),
         question: normalizedQuestion,
         questionCategory,
         questionLevel,
         questionType,
-      });
+      };
+
+      // Only attach answers if it's MCQ
+      if (questionType === QUESTION_TYPE.MCQ && Array.isArray(answers)) {
+        newQuestion.answers = answers.map((a) => ({
+          answer: a.answer,
+          _id: uuidv4(),
+          isCorrect: a.isCorrect,
+          responseCount: 1,
+        }));
+      }
+
+      validQuestions.push(newQuestion);
     }
   }
 
   // Step 9: If no new questions to insert, send a proper response
   if (validQuestions.length === 0) {
-    throw new ApiError(409, "All questions provided are duplicate");
+    throw new ApiError(
+      409,
+      "Questions provided are duplicate including all the fields"
+    );
   }
 
   // Step 10: Insert valid questions into DB
@@ -86,8 +107,11 @@ const addQuestions = asyncHandler(async (req, res) => {
 const getQuestion = asyncHandler(async (req, res) => {
   // Step 1: Build base query to fetch selected fields (excluding answers)
   let query = Question.find({})
-    .select("question questionCategory questionLevel")
+    .select("_id question questionCategory questionLevel")
     .sort({ createdAt: 1 }); // shows the latest questions on top
+
+  // const query2 = Question.find({ questionType: "Mcq" });
+  // console.log(query2);
 
   // Step 2: If request is from ADMIN, include answers and timesSkipped in the selection
   if (req.isAdminRoute) {

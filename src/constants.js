@@ -1,4 +1,4 @@
-export const DB_NAME = "database_Test_Ninja";
+export const DB_NAME = "database_EXPORT_ME";
 
 // Enums for question Type
 export const QUESTION_TYPE = Object.freeze({

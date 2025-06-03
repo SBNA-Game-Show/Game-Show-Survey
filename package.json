@@ -13,11 +13,13 @@
     "prettier": "^3.5.3"
   },
   "dependencies": {
+    "aws-sdk": "^2.1692.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "fs": "^0.0.1-security",
-    "mongoose": "^8.15.0"
+    "mongoose": "^8.15.0",
+    "uuid": "^11.1.0"
   }
 }

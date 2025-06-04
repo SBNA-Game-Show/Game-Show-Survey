@@ -243,6 +243,75 @@ Request to delete an answer according to its Id value using `deleteAnswerById` m
     }
     ```
 
+- **Post Final Questions**
+Request made to finalize the validated questions and their responses
+  - `POST /api/v1/admin/survey/final
+  - Headers: `x-api-key: <API_KEY>`
+  - Sample Body (Only `isCorrect: true` answers will be inserted to the finalized schema):
+  ```
+  {
+  "questions": [
+    {
+      "_id": "fc019308-09ab-4143-ac9e-e92d9a8e0447",
+      "question": "What is the word for fire in Sanskrit?",
+      "questionType": "Input",
+      "questionCategory": "Vocabulary",
+      "questionLevel": "Beginner",
+      "timesSkipped": { "$numberInt": "5" },
+      "answers": [
+        {
+          "_id": "a0",
+          "answer": "Agni",
+          "responseCount": { "$numberInt": "8" },
+          "isCorrect": true
+        },
+        {
+          "_id": "a1",
+          "answer": "Hello",
+          "responseCount": { "$numberInt": "10" },
+          "isCorrect": false
+        },
+        {
+          "_id": "a2",
+          "answer": "Hey",
+          "responseCount": { "$numberInt": "5" },
+          "isCorrect": false
+        }
+      ],
+      "timeStamp": true
+    },
+       {
+         "_id": "d5c1f299-0ec0-4a4f-b77e-d3b248f1c982",
+         "question": "What is the Sanskrit word for water?",
+         "questionType": "Input",
+         "questionCategory": "Vocabulary",
+         "questionLevel": "Beginner",
+         "timesSkipped": { "$numberInt": "2" },
+         "answers": [
+           {
+             "_id": "b0",
+             "answer": "Jala",
+             "responseCount": { "$numberInt": "7" },
+             "isCorrect": true
+           },
+           {
+             "_id": "b1",
+             "answer": "Tree",
+             "responseCount": { "$numberInt": "3" },
+             "isCorrect": false
+           },
+           {
+             "_id": "b2",
+             "answer": "Sky",
+             "responseCount": { "$numberInt": "4" },
+             "isCorrect": false
+           }
+         ],
+         "timeStamp": true
+       }
+     ]
+  }
+
 ### Survey Route
 
 - **Get Questions**
@@ -282,6 +351,7 @@ src/
     answer.controller.js
     user.controller.js
     question.controller.js
+    finalQuestion.controller.js
   db/
     index.js
   middlewares/
@@ -290,6 +360,7 @@ src/
   models/
     admin.model.js
     question.model.js
+    finalQuestion.model.js
     user.model.js
   routes/
     admin.route.js
@@ -314,6 +385,8 @@ src/
   - `Grammar`
   - `Vocabulary`
   - `Literature`
+  - `History`
+  - `Culture`
 - Question levels are:
   - `Beginner`
   - `Intermediate`

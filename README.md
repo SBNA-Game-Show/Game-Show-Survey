@@ -69,18 +69,18 @@ A minimal backend API for managing survey questions and answers, built with Node
 **Question Collection Layout**
 ```
 {
-   "_id": {"$oid": "68373facb384c8b16146c183"},
+   "_id": "3b4740f5-bbe7-4789-b171-aff62bc6337b",
    "question": "What is the word for fire in Sanskrit?",
    "questionType": "Input",
    "questionCategory": "Vocabulary",
    "questionLevel": "Beginner",
    "timesSkipped": {"$numberInt":"5"},
    "answers": [
-      {"answerId": "a1",
+      {"_id": "3b4740f5-bbe7-4789-b171-aff62bc6337c",
       "answer": "Hello",
       "responseCount": {"$numberInt": "10"},
       "isCorrect": false},
-      {"answerId": "a2",
+      {"_id": "3b4740f5-bbe7-4789-b171-aff62bc6337d",
       "answer": "Hey",
       "responseCount": {"$numberInt": "5"},
       "isCorrect": false }
@@ -92,14 +92,11 @@ A minimal backend API for managing survey questions and answers, built with Node
 **User Collection Layout**
 ```
 {
-   "_id": {"$oid": "68374212b384c8b16146c185"},
+   "_id": "3b4740f5-bbe7-4789-b171-aff62bc6337e",
    "userId": "u1",
-   "userName": "Sample",
-   "userEmail": "sample@email.com",
-   "answers": [
-      {"answerId": "a1"},
-      {"answerId": "a2"}
-   ]
+   "displayName": "Clark",
+   "userEmail": "super@email.com",
+   "answerCount": {"$numberInt": "25"} 
 }
 
 ```
@@ -107,11 +104,11 @@ A minimal backend API for managing survey questions and answers, built with Node
 **Admin Collection Layout**
 ```
 {
-   "_id": {"$oid": "68374320b384c8b16146c187"},
+   "_id": "3b4740f5-bbe7-4789-b171-aff62bc6337f",
    "userId": "ad1",
    "userName": "Sammy",
    "userEmail": "sammy@email.com",
-   "password": "blahblah",
+   "password": "encryptedblah",
    "role": "Super Admin(created from backend")"
 }
 

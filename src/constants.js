@@ -21,3 +21,9 @@ export const QUESTION_LEVEL = Object.freeze({
   INTERMEDIATE: "Intermediate",
   ADVANCED: "Advanced",
 })
+
+// Enumns for user role (temp)
+export const USER_ROLE = Object.freeze({
+  USER: "USER",
+  ADMIN: "ADMIN"
+});

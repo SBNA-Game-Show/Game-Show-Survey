@@ -2,6 +2,7 @@ import { QUESTION_TYPE } from "../constants.js";
 import { Question } from "../models/question.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { v4 as uuidv4 } from "uuid";
+
 async function getQuestionForAdmin() {
   // Fetch all questions with full details including answers and timesSkipped,
   // sorted by newest first
@@ -157,16 +158,30 @@ async function updateQuestionById(questionsData) {
 
   const allowedTypes = Object.values(QUESTION_TYPE);
 
-  const updatePromises = questionsData.map(async (data) => {
+  // 1. Get all IDs from incoming update data
+  const idsToUpdate = questionsData.map((q) => q.questionID);
+
+  // 2. Fetch all existing questions from DB in one query by IDs
+  const existingQuestions = await Question.find({ _id: { $in: idsToUpdate } });
+
+  // 3. Build a Map for quick lookup by ID
+  const questionMap = new Map(existingQuestions.map((q) => [q._id, q]));
+
+  // 4. Array to hold update results
+  const updatedQuestions = [];
+
+  // 5. Loop over each update data
+  for (const data of questionsData) {
     const {
       questionID,
       question,
       questionCategory,
       questionLevel,
       questionType,
+      answers,
     } = data;
 
-    // Validate input
+    // Validate required fields
     if (
       !questionID ||
       !question ||
@@ -186,13 +201,13 @@ async function updateQuestionById(questionsData) {
 
     const normalizedQuestion = question.toLowerCase().trim();
 
-    // Check question exists
-    const existingQuestion = await Question.findById(questionID);
+    // 6. Get existing question from map
+    const existingQuestion = questionMap.get(questionID);
     if (!existingQuestion) {
       throw new ApiError(404, `Question not found: ID ${questionID}`);
     }
 
-    // Check duplicate excluding itself
+    // 7. Check for duplicates (exclude current question)
     const duplicate = await Question.findOne({
       _id: { $ne: questionID },
       question: normalizedQuestion,
@@ -207,7 +222,7 @@ async function updateQuestionById(questionsData) {
       );
     }
 
-    // Perform update
+    // 8. Perform update in DB
     const updatedQuestion = await Question.findByIdAndUpdate(
       questionID,
       {
@@ -216,39 +231,60 @@ async function updateQuestionById(questionsData) {
           questionCategory,
           questionLevel,
           questionType,
+          answers: answers
+            ? answers.map((a) => ({
+                _id: a._id, // if you want to keep the same id or generate new one
+                answer: a.answer,
+                responseCount: a.responseCount || 0,
+                isCorrect: a.isCorrect || false,
+                rank: a.rank,
+                score: a.score,
+              }))
+            : undefined,
         },
       },
       { new: true }
     );
 
-    return updatedQuestion;
-  });
-
-  // Run all updates concurrently and wait for all to finish
-  const updatedQuestions = await Promise.all(updatePromises);
+    updatedQuestions.push(updatedQuestion);
+  }
 
   return updatedQuestions;
 }
 
-async function deleteQuestionById(data) {
-  const { questionID } = data;
-
-  // Step 3 If no ID throw Error
-  if (!questionID) {
-    throw new ApiError(403, "Question Id missing. Operation Failed !!");
+async function deleteQuestionById(questionDataArray) {
+  // Step 1: Validate the input is a non-empty array
+  if (!Array.isArray(questionDataArray) || questionDataArray.length === 0) {
+    throw new ApiError(
+      400,
+      "Request body must contain an array of questions to delete."
+    );
   }
 
-  // Step 4 Look for the question To Delete based on questionID
-  const deletedQuestions = await Question.findByIdAndDelete({
-    _id: questionID,
+  // Step 2: Extract all valid questionIDs
+  const questionIDs = questionDataArray
+    .map((q) => q.questionId)
+    .filter((id) => typeof id === "string" && id.trim() !== "");
+
+  if (questionIDs.length === 0) {
+    throw new ApiError(400, "No valid Question IDs provided.");
+  }
+
+  // Step 3: Delete all questions with matching IDs in a single DB call
+  const result = await Question.deleteMany({
+    _id: { $in: questionIDs },
   });
 
-  // Step 5 If no question is found with the specified ID throw Error
-  if (!deletedQuestions) {
-    throw new ApiError(404, "Question with specified ID doesnt Exist.");
+  // Step 4: Handle case when no documents were deleted
+  if (result.deletedCount === 0) {
+    throw new ApiError(404, "No questions were deleted. IDs may be invalid.");
   }
 
-  return deletedQuestions;
+  // Step 5: Return the result for logging or confirmation
+  return {
+    deletedCount: result.deletedCount,
+    message: `${result.deletedCount} question(s) deleted successfully.`,
+  };
 }
 
 export {

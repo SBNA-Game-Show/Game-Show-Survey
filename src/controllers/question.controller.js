@@ -97,13 +97,10 @@ const deleteQuestionById = asyncHandler(async (req, res) => {
   if (!req.isAdminRoute) {
     throw new ApiError(403, "Invalid Request. NO ADMIN privilege ");
   }
-  const deletedQuestions = await questionService.deleteQuestionById(req.body);
+  const { questions } = req.body;
+  const deletedQuestions = await questionService.deleteQuestionById(questions);
 
-  return res
-    .status(200)
-    .json(
-      new ApiResponse(200, deletedQuestions, "Question Deleted Successfully")
-    );
+  return res.status(200).json(new ApiResponse(200, deletedQuestions));
 });
 
 export { addQuestions, getQuestion, updateQuestionById, deleteQuestionById };

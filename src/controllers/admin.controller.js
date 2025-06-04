@@ -14,8 +14,6 @@ const addAdmin = asyncHandler(async (req, res) => {
     // get info from request body
     const { userName, password, role } = req.body;
 
-    // do validation on info
-
     // check for missing fields
     if (!userName || !password || !role) {
         throw new ApiError(400, "All fields are required for creating an admin");
@@ -25,7 +23,6 @@ const addAdmin = asyncHandler(async (req, res) => {
     const alreadyExists = await Admin.findOne(
         {'userName': userName}
     );
-
 
     // add the new administrator to the database if it doesn't already exist
     if (!alreadyExists) {
@@ -53,8 +50,6 @@ const updateAdmin = asyncHandler(async (req, res) => {
 
     // get info from request body
     const { userName, newUserName, newPassword, newRole } = req.body;
-
-    // do validation on info
 
     // check for missing/empty fields
     if (!userName || !newUserName || !newPassword || !newRole) {

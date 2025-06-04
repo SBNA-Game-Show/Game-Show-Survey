@@ -4,6 +4,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { v4 as uuidv4 } from "uuid";
 import { QUESTION_TYPE } from "../constants.js";
+import * as questionService from "../services/question.service.js";
 /*
   ROUTE METHOD FOR
   ADDING  QUESTIONS TO DATABASE
@@ -16,79 +17,7 @@ const addQuestions = asyncHandler(async (req, res) => {
   // Step 2: Extract the questions array from the request body
   const { questions } = req.body;
 
-  // Step 3: Validate that it's a non-empty array
-  if (!Array.isArray(questions) || questions.length === 0) {
-    throw new ApiError(400, "Question must not be an empty Array");
-  }
-
-  // Step 4: Initialize a list to store valid (non-duplicate) questions
-  let validQuestions = [];
-  for (const q of questions) {
-    const { question, questionType, questionCategory, questionLevel, answers } =
-      q;
-
-    // Step 5: Check for missing required fields
-    if (
-      [question, questionCategory, questionLevel, questionType].some(
-        (field) => !field || field.trim() === ""
-      )
-    ) {
-      throw new ApiError(400, "All fields are required for every question");
-    }
-    if (questionType === QUESTION_TYPE.MCQ) {
-      if (!Array.isArray(answers) || answers.length != 4) {
-        throw new ApiError(
-          "400",
-          "Question Type of MCQ must have 4 Answer options along with it"
-        );
-      }
-    }
-
-    // Step 6: Normalize question text to avoid case-based duplicates
-    const normalizedQuestion = question.toLowerCase().trim();
-    // Step 7: Check if the question already exists in the DB
-    const alreadyExists = await Question.findOne({
-      question: normalizedQuestion,
-      questionType,
-      questionCategory,
-      questionLevel,
-    });
-
-    // Step 8: Only add question to valid list if it's not a duplicate
-    if (!alreadyExists) {
-      const newQuestion = {
-        _id: uuidv4(),
-        question: normalizedQuestion,
-        questionCategory,
-        questionLevel,
-        questionType,
-      };
-
-      // Only attach answers if it's MCQ
-      if (questionType === QUESTION_TYPE.MCQ && Array.isArray(answers)) {
-        newQuestion.answers = answers.map((a) => ({
-          answer: a.answer,
-          _id: uuidv4(),
-          isCorrect: a.isCorrect,
-          responseCount: 1,
-        }));
-      }
-
-      validQuestions.push(newQuestion);
-    }
-  }
-
-  // Step 9: If no new questions to insert, send a proper response
-  if (validQuestions.length === 0) {
-    throw new ApiError(
-      409,
-      "Questions provided are duplicate including all the fields"
-    );
-  }
-
-  // Step 10: Insert valid questions into DB
-  const insertedQuestions = await Question.insertMany(validQuestions);
-
+  const insertedQuestions = await questionService.addQuestions(questions);
   return res
     .status(201)
     .json(
@@ -105,30 +34,40 @@ const addQuestions = asyncHandler(async (req, res) => {
   RETRIEVING QUESTIONS AND ANSWERS FROM DATABASE
 */
 const getQuestion = asyncHandler(async (req, res) => {
-  // Step 1: Build base query to fetch selected fields (excluding answers)
-  let query = Question.find({})
-    .select("_id question questionCategory questionLevel")
-    .sort({ createdAt: 1 }); // shows the latest questions on top
-
-  // const query2 = Question.find({ questionType: "Mcq" });
-  // console.log(query2);
-
-  // Step 2: If request is from ADMIN, include answers and timesSkipped in the selection
+  // Step:1  Check if the request is from an admin route
   if (req.isAdminRoute) {
-    query = query.select("timesSkipped answers"); // adds "answers" to the already selected fields
+    // Step:2   Fetch all questions with admin-level details (including answers and timesSkipped)
+    const questions = await questionService.getQuestionForAdmin();
+
+    // Step:3  If no questions found, throw a 404 error
+    if (questions.length === 0) {
+      throw new ApiError(404, "No questions found");
+    }
+    // Step:4  Respond with success and the list of questions
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(200, questions, "Questions Retrieved Successfully")
+      );
+  } else {
+    // Step:1  Fetch questions for normal users (input + MCQ types, limited fields)
+    const questions = await questionService.getQuestionsForUser([
+      QUESTION_TYPE.INPUT,
+      QUESTION_TYPE.MCQ,
+    ]);
+
+    // Step:2  If no questions found, throw a 404 error
+    if (questions.length === 0) {
+      throw new ApiError(404, "No questions found");
+    }
+
+    // Step:3  Respond with success and the list of questions
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(200, questions, "Questions Retrieved Successfully")
+      );
   }
-
-  // Step 3: Execute the query
-  const questions = await query;
-
-  // Step 4 if No questions are returned throw error
-  if (questions.length === 0) {
-    throw new ApiError(404, "No questions found");
-  }
-
-  return res
-    .status(200)
-    .json(new ApiResponse(200, questions, "Questions Retrieved Successfully"));
 });
 
 /*
@@ -140,41 +79,8 @@ const updateQuestionById = asyncHandler(async (req, res) => {
   if (!req.isAdminRoute) {
     throw new ApiError(403, "Invalid Request. NO ADMIN privilege ");
   }
-
-  // Step 2 deconstruct the whole Request based on the fields needed
-  const {
-    questionID,
-    question,
-    questionCategory,
-    questionLevel,
-    questionType,
-  } = req.body;
-
-  // Step 3: Validate input fields
-  if (!questionID || !question || !questionCategory || !questionLevel) {
-    throw new ApiError(400, "Missing required fields.");
-  }
-  // Step 4 Check for the question based on the fields
-  const queryQuestion = await Question.findById(questionID);
-
-  // Step 5 if No question then Throw Error
-  if (!queryQuestion) {
-    throw new ApiError(404, "Question not found. Invalid ID.");
-  }
-
-  // Step 6 update the question
-  const updatedQuestion = await Question.findByIdAndUpdate(
-    questionID,
-    {
-      $set: {
-        question: question,
-        questionCategory: questionCategory,
-        questionLevel: questionLevel,
-        questionType: questionType,
-      },
-    },
-    { new: true }
-  );
+  const { questions } = req.body;
+  const updatedQuestion = await questionService.updateQuestionById(questions);
   return res
     .status(200)
     .json(
@@ -189,37 +95,14 @@ const updateQuestionById = asyncHandler(async (req, res) => {
 const deleteQuestionById = asyncHandler(async (req, res) => {
   // Step 1 Check for admin Route
   if (!req.isAdminRoute) {
-    return res
-      .status(403)
-      .json(new ApiError(403, "Invalid Request. NO ADMIN privilege "));
+    throw new ApiError(403, "Invalid Request. NO ADMIN privilege ");
   }
-  // Step 2 deconstruct the questionID from the request Body
-  const { questionID } = req.body;
-
-  // Step 3 If no ID throw Error
-  if (!questionID) {
-    return res
-      .status(403)
-      .json(new ApiError(403, "Question Id missing. Operation Failed !!"));
-  }
-
-  // Step 4 Look for the question To Delete based on questionID
-  const questionToDelete = await Question.findById({ _id: questionID });
-
-  // Step 5 If no question is found with the specified ID throw Error
-  if (!questionToDelete) {
-    return res
-      .status(404)
-      .json(new ApiError(404, "Question with specified ID doesnt Exist."));
-  }
-
-  // Step 6 If everything matches DELETE the question along with its answers
-  await Question.deleteOne({ _id: questionID });
+  const deletedQuestions = await questionService.deleteQuestionById(req.body);
 
   return res
     .status(200)
     .json(
-      new ApiResponse(200, questionToDelete, "Question Deleted Successfully")
+      new ApiResponse(200, deletedQuestions, "Question Deleted Successfully")
     );
 });
 

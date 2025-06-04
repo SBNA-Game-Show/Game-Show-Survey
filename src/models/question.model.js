@@ -7,6 +7,7 @@ import {
 
 const questionSchema = new Schema(
   {
+    _id: { type: String },
     question: { type: String, required: true, trim: true },
     questionType: {
       type: String,
@@ -26,11 +27,12 @@ const questionSchema = new Schema(
     timesSkipped: { type: Number, required: false, min: 0, default: 0 },
     answers: [
       {
+        _id: { type: String },
         answer: { type: String, required: false, trim: true },
         responseCount: { type: Number, required: false, min: 0, default: 0 },
         isCorrect: { type: Boolean, required: true, default: false },
         rank: { type: Number, required: false, min: 1 },
-        score: { type: Number, required: false, min: 0 }
+        score: { type: Number, required: false, min: 0 },
       },
     ],
   },

@@ -247,7 +247,7 @@ Request to delete an answer according to its Id value using `deleteAnswerById` m
 Request made to finalize the validated questions and their responses
   - `POST /api/v1/admin/survey/final
   - Headers: `x-api-key: <API_KEY>`
-  - Sample Body (Only `isCorrect: true` answers will be inserted to the finalized schema):
+  - Sample Body (Only `isCorrect: true` answers and their respective questions will be inserted to the finalized schema):
   ```json
   {
   "questions": [

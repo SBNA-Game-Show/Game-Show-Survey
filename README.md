@@ -248,7 +248,7 @@ Request made to finalize the validated questions and their responses
   - `POST /api/v1/admin/survey/final
   - Headers: `x-api-key: <API_KEY>`
   - Sample Body (Only `isCorrect: true` answers will be inserted to the finalized schema):
-  ```
+  ```json
   {
   "questions": [
     {

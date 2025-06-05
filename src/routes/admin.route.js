@@ -5,6 +5,7 @@ import {
     updateQuestionById,
     deleteQuestionById
  } from "../controllers/question.controller.js";
+import { updateFinalQuestions } from "../controllers/finalQuestion.controller.js";
 import { checkApiKey } from "../middlewares/apiKey.js";
 import checkIfAdminRoute from "../middlewares/isAdmin.js";
 

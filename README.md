@@ -75,6 +75,7 @@ A minimal backend API for managing survey questions and answers, built with Node
    "questionCategory": "Vocabulary",
    "questionLevel": "Beginner",
    "timesSkipped": {"$numberInt":"5"},
+   "timesAnswered": {"numberInt": "15"},
    "answers": [
       {"_id": "3b4740f5-bbe7-4789-b171-aff62bc6337c",
       "answer": "Hello",
@@ -192,7 +193,7 @@ Request all questions and their respective answers using `getQuestion` method:
 
 - **Update Question By Id**
 Request to retrieve a specific question and modify its properties with `updateQuestionById` method:
-  - `PUT /api/v1/admin/`
+  - `PUT /api/v1/admin/survey`
   - Headers: `x-api-key: <API_KEY>`
   - Sample Body:
     ```json
@@ -207,7 +208,7 @@ Request to retrieve a specific question and modify its properties with `updateQu
 
 - **Delete Question By Id**
 Request to delete a question according to its Id value using `deleteQuestionById` method:
-  - `DELETE /api/v1/admin/`
+  - `DELETE /api/v1/admin/survey`
   - Headers: `x-api-key: <API_KEY>`
   - Sample Body:
     ```json
@@ -216,36 +217,9 @@ Request to delete a question according to its Id value using `deleteQuestionById
     }
     ```
 
-- **Delete Answer By Id**
-Request to delete an answer according to its Id value using `deleteAnswerById` method:
-  - `DELETE /api/v1/admin/answer`
-  - Headers: `x-api-key: <API_KEY>`
-  - Sample Body:
-    ```json
-    {
-    "questions":
-    [
-        {
-            "_id": "68387c69aae27e31ebbcfe29"
-        },
-        {
-            "_id": "68387c69aae27e31ebbcfe28"
-        }
-    ],
-    "answers": [
-        {
-            "answer": "Sunday"
-        },
-        {
-            "answer": "Red"
-        }
-    ]
-    }
-    ```
-
 - **Post Final Questions**
 Request made to finalize the validated questions and their responses
-  - `POST /api/v1/admin/survey/final
+  - `POST /api/v1/admin/survey/final`
   - Headers: `x-api-key: <API_KEY>`
   - Sample Body (Only `isCorrect: true` answers and their respective questions will be inserted to the finalized schema):
   ```json
@@ -258,6 +232,7 @@ Request made to finalize the validated questions and their responses
       "questionCategory": "Vocabulary",
       "questionLevel": "Beginner",
       "timesSkipped": { "$numberInt": "5" },
+      "timesAnswered": {"numberInt": "23"},
       "answers": [
         {
           "_id": "a0",
@@ -287,6 +262,7 @@ Request made to finalize the validated questions and their responses
          "questionCategory": "Vocabulary",
          "questionLevel": "Beginner",
          "timesSkipped": { "$numberInt": "2" },
+         "timesAnswered": {"numberInt": "14"},
          "answers": [
            {
              "_id": "b0",

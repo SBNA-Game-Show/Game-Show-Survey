@@ -1,0 +1,19 @@
+{
+   "_id": "3b4740f5-bbe7-4789-b171-aff62bc6337b",
+   "question": "What is the word for fire in Sanskrit?",
+   "questionType": "Input",
+   "questionCategory": "Vocabulary",
+   "questionLevel": "Beginner",
+   "timesSkipped": {"$numberInt":"5"},
+   "answers": [
+      {"_id": "3b4740f5-bbe7-4789-b171-aff62bc6337c",
+      "answer": "Hello",
+      "responseCount": {"$numberInt": "10"},
+      "isCorrect": false},
+      {"_id": "3b4740f5-bbe7-4789-b171-aff62bc6337d",
+      "answer": "Hey",
+      "responseCount": {"$numberInt": "5"},
+      "isCorrect": false }
+   ],
+   "timeStamp": true
+}

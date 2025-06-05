@@ -1,0 +1,7 @@
+{
+   "_id": "3b4740f5-bbe7-4789-b171-aff62bc6337e",
+   "userId": "u1",
+   "displayName": "Clark",
+   "userEmail": "super@email.com",
+   "answerCount": {"$numberInt": "25"} 
+}

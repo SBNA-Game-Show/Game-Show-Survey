@@ -34,7 +34,7 @@ async function getQuestionsForUser(
     queries.push(
       Question.find({ questionType: QUESTION_TYPE.MCQ })
         .select(
-          "_id question questionCategory questionLevel questionType answers"
+          "_id question questionCategory questionLevel questionType answers.answer"
         )
         .sort({ createdAt: -1 })
     );

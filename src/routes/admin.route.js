@@ -28,7 +28,7 @@ adminRouter.route("/survey").delete(checkApiKey, checkIfAdminRoute, deleteQuesti
 // for finalizing valid questions and answers
 
 // [ POST ] METHOD to apply finalized questions and correct responses to finalQuestionSchema
-// adminRouter.route("/survey/final").put(checkApiKey, checkIfAdminRoute, updateFinalQuestions)
+adminRouter.route("/survey/final").put(checkApiKey, checkIfAdminRoute, updateFinalQuestions)
 
 
 export default adminRouter;

@@ -25,6 +25,7 @@ const questionSchema = new Schema(
       required: false,
     },
     timesSkipped: { type: Number, required: false, min: 0, default: 0 },
+    timesAnswered: { type: Number, required: false, min: 0, default: 0 },
     answers: [
       {
         _id: { type: String },

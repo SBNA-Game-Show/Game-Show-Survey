@@ -226,67 +226,60 @@ Request made to finalize the validated questions and their responses
   {
   "questions": [
     {
-      "_id": "fc019308-09ab-4143-ac9e-e92d9a8e0447",
       "question": "What is the word for fire in Sanskrit?",
       "questionType": "Input",
       "questionCategory": "Vocabulary",
       "questionLevel": "Beginner",
-      "timesSkipped": { "$numberInt": "5" },
-      "timesAnswered": {"numberInt": "23"},
+      "timesSkipped": 5,
+      "timesAnswered": 23,
       "answers": [
         {
-          "_id": "a0",
           "answer": "Agni",
-          "responseCount": { "$numberInt": "8" },
+          "responseCount": 8,
           "isCorrect": true
         },
         {
-          "_id": "a1",
           "answer": "Hello",
-          "responseCount": { "$numberInt": "10" },
+          "responseCount": 10,
           "isCorrect": false
         },
         {
-          "_id": "a2",
           "answer": "Hey",
-          "responseCount": { "$numberInt": "5" },
+          "responseCount": 5,
           "isCorrect": false
         }
       ],
       "timeStamp": true
     },
-       {
-         "_id": "d5c1f299-0ec0-4a4f-b77e-d3b248f1c982",
-         "question": "What is the Sanskrit word for water?",
-         "questionType": "Input",
-         "questionCategory": "Vocabulary",
-         "questionLevel": "Beginner",
-         "timesSkipped": { "$numberInt": "2" },
-         "timesAnswered": {"numberInt": "14"},
-         "answers": [
-           {
-             "_id": "b0",
-             "answer": "Jala",
-             "responseCount": { "$numberInt": "7" },
-             "isCorrect": true
-           },
-           {
-             "_id": "b1",
-             "answer": "Tree",
-             "responseCount": { "$numberInt": "3" },
-             "isCorrect": false
-           },
-           {
-             "_id": "b2",
-             "answer": "Sky",
-             "responseCount": { "$numberInt": "4" },
-             "isCorrect": false
-           }
-         ],
-         "timeStamp": true
-       }
-     ]
+    {
+      "question": "What is the Sanskrit word for water?",
+      "questionType": "Input",
+      "questionCategory": "Vocabulary",
+      "questionLevel": "Beginner",
+      "timesSkipped": 2,
+      "timesAnswered": 14,
+      "answers": [
+        {
+          "answer": "Jala",
+          "responseCount": 7,
+          "isCorrect": true
+        },
+        {
+          "answer": "Tree",
+          "responseCount": 3,
+          "isCorrect": false
+        },
+        {
+          "answer": "Sky",
+          "responseCount": 4,
+          "isCorrect": false
+        }
+      ],
+      "timeStamp": true
+    }
+  ]
   }
+
 
 ### Survey Route
 

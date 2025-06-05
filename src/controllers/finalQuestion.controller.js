@@ -28,6 +28,8 @@ const updateFinalQuestions = asyncHandler(async (req, res) => {
       questionType,
       questionCategory,
       questionLevel,
+      timesSkipped,
+      timesAnswered,
       answers
     } = q;
  
@@ -63,6 +65,8 @@ const updateFinalQuestions = asyncHandler(async (req, res) => {
       questionCategory,
       questionLevel,
       questionType,
+      timesSkipped,
+      timesAnswered,
       answers: filteredAnswers
     });
     }

@@ -1,4 +1,4 @@
-export const DB_NAME = "Test01";
+export const DB_NAME = "Test02-Final";
 
 // Enums for question Type
 export const QUESTION_TYPE = Object.freeze({
@@ -26,4 +26,4 @@ export const USER_ROLE = Object.freeze({
   USER: "User",
   ADMIN: "Admin",
   SUPERADMIN: "SuperAdmin",
-})
+});

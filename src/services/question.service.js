@@ -7,7 +7,8 @@ import { SCHEMA_MODELS } from "../utils/enums.js";
 async function getQuestionForAdmin(collection) {
   // Fetch all questions with full details including answers and timesSkipped,
   // sorted by newest first
-  const questions = await collection.find({})
+  const questions = await collection
+    .find({})
     .select(
       "_id question questionCategory questionLevel questionType answers timesSkipped timesAnswered"
     )
@@ -25,7 +26,8 @@ async function getQuestionsForUser(
   // If INPUT questions are requested, prepare query without answers
   if (types.includes(QUESTION_TYPE.INPUT)) {
     queries.push(
-      collection.find({ questionType: QUESTION_TYPE.INPUT })
+      collection
+        .find({ questionType: QUESTION_TYPE.INPUT })
         .select("_id question questionCategory questionLevel questionType")
         .sort({ createdAt: -1 })
     );
@@ -61,7 +63,6 @@ async function getQuestionsForUser(
 }
 
 async function addQuestions(questions, collection) {
-  
   // Step 1: Validate that it's a non-empty array
   if (!Array.isArray(questions) || questions.length === 0) {
     throw new ApiError(400, "Question must not be an empty Array");
@@ -70,8 +71,15 @@ async function addQuestions(questions, collection) {
   // Step 2: Initialize a list to store valid (non-duplicate) questions
   let validQuestions = [];
   for (const q of questions) {
-    const { question, questionType, questionCategory, questionLevel, timesSkipped, timesAnswered, answers } =
-      q;
+    const {
+      question,
+      questionType,
+      questionCategory,
+      questionLevel,
+      timesSkipped,
+      timesAnswered,
+      answers,
+    } = q;
 
     // Step 3: Check for missing required fields
     if (
@@ -119,7 +127,6 @@ async function addQuestions(questions, collection) {
       questionCategory,
       questionLevel,
     });
- 
 
     // Step 6: Only add question to valid list if it's not a duplicate
     if (!alreadyExists) {
@@ -134,19 +141,33 @@ async function addQuestions(questions, collection) {
       };
 
       // Only attach answers if it's MCQ
-      if(collection === SCHEMA_MODELS.FINALQUESTION) {
+      if (collection === SCHEMA_MODELS.FINALQUESTION) {
         // validating if the answer is correct
-        const filteredAnswers = answers.filter((a) => {
-        return a.isCorrect === true;
-      })
- 
+
+        let filteredAnswers = [];
+        if (questionType === QUESTION_TYPE.INPUT) {
+          filteredAnswers = answers.filter((a) => {
+            return a.isCorrect === true;
+          });
+        }
+        if (questionType === QUESTION_TYPE.MCQ) {
+          filteredAnswers = answers;
+        }
+
         newQuestion.answers = filteredAnswers.map((a) => ({
           answer: a.answer,
           _id: uuidv4(),
           isCorrect: a.isCorrect,
+          responseCount: a.responseCount,
+          rank: a.rank,
+          score: a.score,
         }));
       }
-      if (collection === SCHEMA_MODELS.QUESTION && questionType === QUESTION_TYPE.MCQ && Array.isArray(answers)) {
+      if (
+        collection === SCHEMA_MODELS.QUESTION &&
+        questionType === QUESTION_TYPE.MCQ &&
+        Array.isArray(answers)
+      ) {
         newQuestion.answers = answers.map((a) => ({
           answer: a.answer,
           _id: uuidv4(),
@@ -184,8 +205,9 @@ async function updateQuestionById(questionsData, collection) {
   const idsToUpdate = questionsData.map((q) => q.questionID);
 
   // 2. Fetch all existing questions from DB in one query by IDs
-  const existingQuestions = await collection.find({ _id: { $in: idsToUpdate } });
-  console.log(existingQuestions)
+  const existingQuestions = await collection.find({
+    _id: { $in: idsToUpdate },
+  });
 
   // 3. Build a Map for quick lookup by ID
   const questionMap = new Map(existingQuestions.map((q) => [q._id, q]));
@@ -224,12 +246,20 @@ async function updateQuestionById(questionsData, collection) {
       );
     }
     if (answers) {
-      const missingAnswerId = answers.some((a) => !a._id);
+      const missingAnswerId = answers.some((a) => !a.answerID);
       if (missingAnswerId) {
         throw new ApiError(
           400,
           "Each answer must have a valid _id for update."
         );
+      }
+    }
+    if (collection === SCHEMA_MODELS.FINALQUESTION) {
+      if (questionType === QUESTION_TYPE.INPUT) {
+        const correctAnswers = answers.filter((a) => a.isCorrect === true);
+        if (correctAnswers.length !== 1) {
+          throw new ApiError(400, "Answer must be set to Correct");
+        }
       }
     }
     if (questionType === QUESTION_TYPE.MCQ) {

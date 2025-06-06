@@ -140,20 +140,21 @@ async function addQuestions(questions, collection) {
         timesAnswered,
       };
 
-      // Only attach answers if it's MCQ
+      // Only attach answers if it's FINALQUESTION collection
       if (collection === SCHEMA_MODELS.FINALQUESTION) {
-        // validating if the answer is correct
-
+        // For INPUT type questions, keep only correct answers
         let filteredAnswers = [];
         if (questionType === QUESTION_TYPE.INPUT) {
           filteredAnswers = answers.filter((a) => {
             return a.isCorrect === true;
           });
         }
+        // For MCQ type, keep all provided answers
         if (questionType === QUESTION_TYPE.MCQ) {
           filteredAnswers = answers;
         }
 
+        // Map filtered answers to desired structure with UUIDs
         newQuestion.answers = filteredAnswers.map((a) => ({
           answer: a.answer,
           _id: uuidv4(),
@@ -163,6 +164,8 @@ async function addQuestions(questions, collection) {
           score: a.score,
         }));
       }
+
+      // Handle regular QUESTION collection with MCQ type
       if (
         collection === SCHEMA_MODELS.QUESTION &&
         questionType === QUESTION_TYPE.MCQ &&
@@ -246,6 +249,7 @@ async function updateQuestionById(questionsData, collection) {
       );
     }
     if (answers) {
+      // Ensure all answers have an ID (needed for updates)
       const missingAnswerId = answers.some((a) => !a.answerID);
       if (missingAnswerId) {
         throw new ApiError(
@@ -255,6 +259,7 @@ async function updateQuestionById(questionsData, collection) {
       }
     }
     if (collection === SCHEMA_MODELS.FINALQUESTION) {
+      // INPUT questions must have exactly one correct answer
       if (questionType === QUESTION_TYPE.INPUT) {
         const correctAnswers = answers.filter((a) => a.isCorrect === true);
         if (correctAnswers.length !== 1) {
@@ -263,28 +268,33 @@ async function updateQuestionById(questionsData, collection) {
       }
     }
     if (questionType === QUESTION_TYPE.MCQ) {
+      // Must have exactly 4 options
       if (!Array.isArray(answers) || answers.length !== 4) {
         throw new ApiError(
           400,
           "MCQ Type questions must have exactly 4 answer options"
         );
       }
+      // Only one answer should be correct
       const correctAnswers = answers.filter((a) => a.isCorrect === true);
       if (correctAnswers.length !== 1) {
         throw new ApiError(400, "MCQ must have exactly one correct answer");
       }
+      // All answers must have non-empty text
       const hasEmptyAnswer = answers.some(
         (a) => !a.answer || a.answer.trim() === ""
       );
       if (hasEmptyAnswer) {
         throw new ApiError(400, "Each MCQ answer must have non-empty text");
       }
+      // Answer options must be unique (case-insensitive)
       const answerTexts = answers.map((a) => a.answer.toLowerCase().trim());
       const hasDuplicates = new Set(answerTexts).size !== answerTexts.length;
       if (hasDuplicates) {
         throw new ApiError(400, "MCQ answer options must be unique");
       }
     }
+    // Normalize question text for consistency
     const normalizedQuestion = question.toLowerCase().trim();
 
     // 6. Get existing question from map

@@ -2,6 +2,7 @@ import { Question } from "../models/question.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
+import { v4 as uuidv4 } from "uuid";
 
 // User adds answers to the questions [ PUT ]
 const addAnswerToQuestion = asyncHandler(async (req, res) => {
@@ -56,6 +57,7 @@ const addAnswerToQuestion = asyncHandler(async (req, res) => {
         $push: {
           answers: {
             answer: cleanAnswer,
+            _id: uuidv4(),
             responseCount: 1,
           },
         },

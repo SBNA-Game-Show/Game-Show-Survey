@@ -32,7 +32,7 @@ const questionSchema = new Schema(
         answer: { type: String, required: false, trim: true },
         responseCount: { type: Number, required: false, min: 0, default: 0 },
         isCorrect: { type: Boolean, required: true, default: false },
-        rank: { type: Number, required: false, min: 1, default: 1 },
+        rank: { type: Number, required: false, min: 0, default: 0 },
         score: { type: Number, required: false, min: 0, default: 0 },
       },
     ],

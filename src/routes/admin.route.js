@@ -5,7 +5,12 @@ import {
     updateQuestionById,
     deleteQuestionById
  } from "../controllers/question.controller.js";
-import { updateFinalQuestions } from "../controllers/finalQuestion.controller.js";
+import { 
+    updateFinalQuestions,
+    getFinalQuestions,
+    updateFinalQuestionById,
+    deleteFinalQuestionById
+ } from "../controllers/finalQuestion.controller.js";
 import { checkApiKey } from "../middlewares/apiKey.js";
 import checkIfAdminRoute from "../middlewares/isAdmin.js";
 
@@ -30,6 +35,15 @@ adminRouter.route("/survey").delete(checkApiKey, checkIfAdminRoute, deleteQuesti
 
 // [ POST ] METHOD to apply finalized questions and correct responses to finalQuestionSchema
 adminRouter.route("/survey/final").post(checkApiKey, checkIfAdminRoute, updateFinalQuestions)
+
+// [ PUT ] METHOD to make changes to a finalized question's fields in the DataBase by ID
+adminRouter.route("/survey/final").put(checkApiKey, checkIfAdminRoute, updateFinalQuestionById)
+
+// [ GET ] METHOD to retrieve all questions and answers for admin, users will only see questions
+adminRouter.route("/survey/final").get(checkApiKey, checkIfAdminRoute, getFinalQuestions)
+
+// [ DELETE ] METHOD to delete a question from the finalized DataBase
+adminRouter.route("/survey/final").delete(checkApiKey, checkIfAdminRoute, deleteFinalQuestionById)
 
 
 export default adminRouter;

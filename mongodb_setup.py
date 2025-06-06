@@ -7,7 +7,7 @@ from bson import ObjectId
 
 # MongoDB Configuration
 MONGO_CONNECTION_STRING = "mongodb+srv://SBNAadmin:8PYSMXyZ%40zp4uwF@cluster1-production.v4anhjy.mongodb.net"
-DB_NAME = "database_Test_Ninja"
+DB_NAME = "database_Test_Ninja2"
 COLLECTION_NAME = "questions"
 
 class MongoDBHandler:
@@ -114,15 +114,20 @@ class MongoDBHandler:
             return []
     
     def update_question_answers(self, question_id, updated_answers):
-        """Update answers for a specific question with proper _id handling"""
+        """Update answers for a specific question with flexible _id handling"""
         try:
-            # Convert string _id back to ObjectId for update
+            # Handle different _id formats (ObjectId, UUID, or string)
             if isinstance(question_id, str):
-                try:
-                    object_id = ObjectId(question_id)
-                except Exception as e:
-                    print(f"Invalid ObjectId format: {question_id}")
-                    return False
+                # Try ObjectId format first (24 chars, no hyphens)
+                if len(question_id) == 24 and '-' not in question_id:
+                    try:
+                        object_id = ObjectId(question_id)
+                    except Exception as e:
+                        print(f"Invalid ObjectId format: {question_id}")
+                        return False
+                else:
+                    # UUID or other string format - use as string directly
+                    object_id = question_id
             else:
                 object_id = question_id
             
@@ -137,20 +142,20 @@ class MongoDBHandler:
                     'score': int(answer.get('score', 0))
                 }
                 
-                # Handle answer _id field - only include if it exists and is valid
+                # Handle answer _id field - support both ObjectId and UUID formats
                 if '_id' in answer and answer['_id']:
                     answer_id = answer['_id']
                     try:
-                        # Try to convert to ObjectId if it's a valid 24-character hex string
-                        if isinstance(answer_id, str) and len(answer_id) == 24:
+                        # If it's a 24-character hex string without hyphens, convert to ObjectId
+                        if isinstance(answer_id, str) and len(answer_id) == 24 and '-' not in answer_id:
                             formatted_answer['_id'] = ObjectId(answer_id)
                         elif isinstance(answer_id, ObjectId):
                             formatted_answer['_id'] = answer_id
                         else:
-                            # Keep as string if it's not a valid ObjectId format
+                            # UUID or other string format - keep as string
                             formatted_answer['_id'] = str(answer_id)
                     except:
-                        # If ObjectId conversion fails, store as string
+                        # If conversion fails, store as string
                         formatted_answer['_id'] = str(answer_id)
                 # If no _id provided, MongoDB will auto-generate one during insert
                 

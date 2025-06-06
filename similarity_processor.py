@@ -1,56 +1,23 @@
-def normalize_sanskrit_text(text):
+def normalize_text(text):
     """
-    Normalize Sanskrit text for similarity comparison.
-    Handles Unicode diacritics and common Sanskrit variations.
+    Normalize text for similarity comparison - universal for any language.
+    Only handles case differences, whitespace, and basic cleanup.
     """
     if not text:
         return ""
     
-    # Convert to lowercase and strip whitespace
-    normalized = text.lower().strip()
-    
-    # Normalize Sanskrit Unicode characters to their base forms
-    # Long vowels to short vowels
-    normalized = normalized.replace('ā', 'a').replace('ă', 'a')
-    normalized = normalized.replace('ī', 'i').replace('ĭ', 'i')
-    normalized = normalized.replace('ū', 'u').replace('ŭ', 'u')
-    normalized = normalized.replace('ē', 'e').replace('ō', 'o')
-    
-    # Vocalic r and l
-    normalized = normalized.replace('ṛ', 'r').replace('ṝ', 'r')
-    normalized = normalized.replace('ḷ', 'l').replace('ḹ', 'l')
-    
-    # Anusvara and visarga
-    normalized = normalized.replace('ṃ', 'm').replace('ṁ', 'm')
-    normalized = normalized.replace('ḥ', 'h').replace('ḫ', 'h')
-    
-    # Consonant variations
-    normalized = normalized.replace('ś', 's').replace('ṣ', 's')
-    normalized = normalized.replace('ṭ', 't').replace('ḍ', 'd')
-    normalized = normalized.replace('ṇ', 'n').replace('ñ', 'n')
-    normalized = normalized.replace('ṅ', 'n').replace('ṁ', 'm')
-    
-    # Remove common Sanskrit endings for better matching
-    # (but keep them if the word would become too short)
-    if len(normalized) > 3:
-        if normalized.endswith('ah') or normalized.endswith('aḥ'):
-            normalized = normalized[:-2]
-        elif normalized.endswith('am') or normalized.endswith('aṃ'):
-            normalized = normalized[:-2]
-        elif normalized.endswith('a') and len(normalized) > 4:
-            normalized = normalized[:-1]
-    
-    return normalized
+    # Convert to lowercase and strip whitespace - universal normalization
+    return text.lower().strip()
 
 def calculate_spell_similarity(text1, text2):
     """
-    Calculate similarity using Levenshtein distance optimized for Sanskrit.
-    Handles Sanskrit Unicode variations and common spelling differences.
+    Calculate similarity using Levenshtein distance - universal for any language.
+    Handles typos, missing letters, and case differences.
     Returns similarity as a value between 0 and 1.
     """
-    # Normalize both texts for Sanskrit comparison
-    s1 = normalize_sanskrit_text(text1)
-    s2 = normalize_sanskrit_text(text2)
+    # Normalize both texts (case insensitive, whitespace trimmed)
+    s1 = normalize_text(text1)
+    s2 = normalize_text(text2)
     
     if s1 == s2:
         return 1.0
@@ -128,7 +95,7 @@ def merge_similar_answers(answers, cutoff=0.75):
             if j <= i or j in processed_indices:
                 continue
                 
-            # Check similarity between answer texts using Sanskrit-aware algorithm
+            # Check similarity between answer texts using universal spell-check algorithm
             similarity = calculate_spell_similarity(
                 answer.get('answer', ''), 
                 other_answer.get('answer', '')
@@ -167,9 +134,9 @@ def merge_similar_answers(answers, cutoff=0.75):
 def process_question_similarity(question_data):
     """
     Process a single question's answers for similarity:
-    1. Merge similar answers based on 75% similarity using Sanskrit-aware algorithm
+    1. Merge similar answers based on 75% similarity using universal algorithm
     2. Return processed question with merged answers (duplicates removed)
-    3. Works with existing data structure (with or without _id fields)
+    3. Works with any language - handles case differences, typos, extra characters
     """
     if not question_data.get('answers'):
         return question_data
@@ -185,7 +152,7 @@ def process_question_similarity(question_data):
 def process_all_questions_similarity(questions_data):
     """
     Process all questions for similarity merging.
-    Works with your existing data structure - handles missing _id fields gracefully.
+    Universal algorithm - works with any language and answer types.
     """
     processed_questions = []
     

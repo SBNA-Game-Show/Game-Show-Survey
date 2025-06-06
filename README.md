@@ -161,7 +161,7 @@ Submit an array of questions to the database using `addQuestions` method:
                {"answer": "Karma",
                "isCorrect": false},
                {"answer": "Agni",
-               "isCorrect": false},
+               "isCorrect": false}
              ]
           },
           {
@@ -177,7 +177,7 @@ Submit an array of questions to the database using `addQuestions` method:
                {"answer": "Salutation",
                "isCorrect": true},
                {"answer": "Power",
-               "isCorrect": false},
+               "isCorrect": false}
              ]
           }
        ]

@@ -8,7 +8,7 @@ async function getQuestionForAdmin() {
   // sorted by newest first
   const questions = await Question.find({})
     .select(
-      "_id question questionCategory questionLevel questionType answers timesSkipped"
+      "_id question questionCategory questionLevel questionType answers timesSkipped timesAnswered"
     )
     .sort({ createdAt: -1 });
   return questions;
@@ -29,7 +29,10 @@ async function getQuestionsForUser(
     );
   }
 
-  // If MCQ questions are requested, prepare query including answers
+  // { [ NEEDED FOR GAME TIME NOT FOR USERS WHEN DOING SURVEY]}
+
+  /*
+  If MCQ questions are requested, prepare query including answers
   if (types.includes(QUESTION_TYPE.MCQ)) {
     queries.push(
       Question.find({ questionType: QUESTION_TYPE.MCQ })
@@ -39,6 +42,7 @@ async function getQuestionsForUser(
         .sort({ createdAt: -1 })
     );
   }
+*/
 
   try {
     // Execute all queries in parallel and combine results
@@ -189,16 +193,49 @@ async function updateQuestionById(questionsData) {
       !questionLevel ||
       !questionType
     ) {
-      throw new ApiError(400, "Missing required fields for a question");
+      throw new ApiError(
+        400,
+        `Missing required fields for a question ${question}, QuestionID: ${questionID}, QuestionCatergory: ${questionCategory}, questionType: ${questionType}`
+      );
     }
-
     if (!allowedTypes.includes(questionType)) {
       throw new ApiError(
         400,
         `Invalid questionType. Allowed: ${allowedTypes.join(", ")}`
       );
     }
-
+    if (answers) {
+      const missingAnswerId = answers.some((a) => !a._id);
+      if (missingAnswerId) {
+        throw new ApiError(
+          400,
+          "Each answer must have a valid _id for update."
+        );
+      }
+    }
+    if (questionType === QUESTION_TYPE.MCQ) {
+      if (!Array.isArray(answers) || answers.length !== 4) {
+        throw new ApiError(
+          400,
+          "MCQ Type questions must have exactly 4 answer options"
+        );
+      }
+      const correctAnswers = answers.filter((a) => a.isCorrect === true);
+      if (correctAnswers.length !== 1) {
+        throw new ApiError(400, "MCQ must have exactly one correct answer");
+      }
+      const hasEmptyAnswer = answers.some(
+        (a) => !a.answer || a.answer.trim() === ""
+      );
+      if (hasEmptyAnswer) {
+        throw new ApiError(400, "Each MCQ answer must have non-empty text");
+      }
+      const answerTexts = answers.map((a) => a.answer.toLowerCase().trim());
+      const hasDuplicates = new Set(answerTexts).size !== answerTexts.length;
+      if (hasDuplicates) {
+        throw new ApiError(400, "MCQ answer options must be unique");
+      }
+    }
     const normalizedQuestion = question.toLowerCase().trim();
 
     // 6. Get existing question from map
@@ -234,7 +271,7 @@ async function updateQuestionById(questionsData) {
           answers: answers
             ? answers.map((a) => ({
                 _id: a._id, // if you want to keep the same id or generate new one
-                answer: a.answer,
+                answer: a.answer.trim().toLowerCase(),
                 responseCount: a.responseCount || 0,
                 isCorrect: a.isCorrect || false,
                 rank: a.rank,
@@ -287,10 +324,77 @@ async function deleteQuestionById(questionDataArray) {
   };
 }
 
+async function addAnswerToQuestion(questions, answers) {
+  if (!Array.isArray(questions) || questions.length === 0) {
+    throw new ApiError(400, "Question must not be an empty Array");
+  }
+
+  const bulkOps = [];
+
+  for (let i = 0; i < questions.length; i++) {
+    const question = questions[i];
+    const answerInput = answers[i];
+
+    if (!question._id || question._id.trim() === "") {
+      throw new ApiError(400, "Missing question ID");
+    }
+
+    const qID = question._id;
+    const answerText = answerInput?.answer?.toLowerCase().trim();
+
+    // Case 1: Answer is blank — increment `timesSkipped`
+    if (!answerText) {
+      bulkOps.push({
+        updateOne: {
+          filter: { _id: qID },
+          update: { $inc: { timesSkipped: 1 } },
+        },
+      });
+      continue;
+    }
+
+    // Case 2: Answer is valid — try increment OR push
+    // First try to increment if answer exists
+    bulkOps.push({
+      updateOne: {
+        filter: { _id: qID, "answers.answer": answerText },
+        update: {
+          $inc: { timesAnswered: 1, "answers.$.responseCount": 1 },
+        },
+      },
+    });
+
+    // Then add a fallback push in case it didn’t exist
+    bulkOps.push({
+      updateOne: {
+        filter: { _id: qID, "answers.answer": { $ne: answerText } },
+        update: {
+          $inc: { timesAnswered: 1 },
+          $push: {
+            answers: {
+              _id: uuidv4(),
+              answer: answerText,
+              responseCount: 1,
+            },
+          },
+        },
+      },
+    });
+  }
+
+  if (bulkOps.length === 0) {
+    throw new ApiError(400, "No valid question/answer pairs provided");
+  }
+
+  // Final step: execute all operations at once
+  await Question.bulkWrite(bulkOps);
+}
+
 export {
   getQuestionForAdmin,
   getQuestionsForUser,
   addQuestions,
   updateQuestionById,
   deleteQuestionById,
+  addAnswerToQuestion,
 };

@@ -1,8 +1,6 @@
-import { Question } from "../models/question.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import { v4 as uuidv4 } from "uuid";
 import { QUESTION_TYPE } from "../constants.js";
 import * as questionService from "../services/question.service.js";
 /*
@@ -103,4 +101,24 @@ const deleteQuestionById = asyncHandler(async (req, res) => {
   return res.status(200).json(new ApiResponse(200, deletedQuestions));
 });
 
-export { addQuestions, getQuestion, updateQuestionById, deleteQuestionById };
+/*
+  ROUTE METHOD FOR [ PUT ]
+  ADDING ANSWERS TO QUESTION BY ID
+*/
+// User adds answers to the questions [ PUT ]
+const addAnswerToQuestion = asyncHandler(async (req, res) => {
+  const { questions, answers } = req.body;
+
+  await questionService.addAnswerToQuestion(questions, answers);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, null, "Answers updated successfully"));
+});
+export {
+  addQuestions,
+  getQuestion,
+  updateQuestionById,
+  deleteQuestionById,
+  addAnswerToQuestion,
+};

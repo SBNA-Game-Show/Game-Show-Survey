@@ -1,6 +1,8 @@
 import { Router } from "express";
-import { getQuestion } from "../controllers/question.controller.js";
-import { addAnswerToQuestion } from "../controllers/answer.controller.js";
+import {
+  getQuestion,
+  addAnswerToQuestion,
+} from "../controllers/question.controller.js";
 import { checkApiKey } from "../middlewares/apiKey.js";
 import checkIfAdminRoute from "../middlewares/isAdmin.js";
 

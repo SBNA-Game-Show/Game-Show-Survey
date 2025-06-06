@@ -2,19 +2,21 @@ import { QUESTION_TYPE } from "../constants.js";
 import { Question } from "../models/question.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { v4 as uuidv4 } from "uuid";
+import { SCHEMA_MODELS } from "../utils/enums.js";
 
-async function getQuestionForAdmin() {
+async function getQuestionForAdmin(collection) {
   // Fetch all questions with full details including answers and timesSkipped,
   // sorted by newest first
-  const questions = await Question.find({})
+  const questions = await collection.find({})
     .select(
-      "_id question questionCategory questionLevel questionType answers timesSkipped"
+      "_id question questionCategory questionLevel questionType answers timesSkipped timesAnswered"
     )
     .sort({ createdAt: -1 });
   return questions;
 }
 
 async function getQuestionsForUser(
+  collection,
   types = [QUESTION_TYPE.INPUT, QUESTION_TYPE.MCQ]
 ) {
   // Initialize empty list for queries
@@ -23,7 +25,7 @@ async function getQuestionsForUser(
   // If INPUT questions are requested, prepare query without answers
   if (types.includes(QUESTION_TYPE.INPUT)) {
     queries.push(
-      Question.find({ questionType: QUESTION_TYPE.INPUT })
+      collection.find({ questionType: QUESTION_TYPE.INPUT })
         .select("_id question questionCategory questionLevel questionType")
         .sort({ createdAt: -1 })
     );
@@ -32,7 +34,7 @@ async function getQuestionsForUser(
   // If MCQ questions are requested, prepare query including answers
   if (types.includes(QUESTION_TYPE.MCQ)) {
     queries.push(
-      Question.find({ questionType: QUESTION_TYPE.MCQ })
+      collection.find({ questionType: QUESTION_TYPE.MCQ })
         .select(
           "_id question questionCategory questionLevel questionType answers.answer"
         )
@@ -54,7 +56,8 @@ async function getQuestionsForUser(
   }
 }
 
-async function addQuestions(questions) {
+async function addQuestions(questions, collection) {
+  
   // Step 1: Validate that it's a non-empty array
   if (!Array.isArray(questions) || questions.length === 0) {
     throw new ApiError(400, "Question must not be an empty Array");
@@ -63,7 +66,7 @@ async function addQuestions(questions) {
   // Step 2: Initialize a list to store valid (non-duplicate) questions
   let validQuestions = [];
   for (const q of questions) {
-    const { question, questionType, questionCategory, questionLevel, answers } =
+    const { question, questionType, questionCategory, questionLevel, timesSkipped, timesAnswered, answers } =
       q;
 
     // Step 3: Check for missing required fields
@@ -106,12 +109,13 @@ async function addQuestions(questions) {
     // Step 4: Normalize question text to avoid case-based duplicates
     const normalizedQuestion = question.toLowerCase().trim();
     // Step 5: Check if the question already exists in the DB
-    const alreadyExists = await Question.findOne({
+    const alreadyExists = await collection.findOne({
       question: normalizedQuestion,
       questionType,
       questionCategory,
       questionLevel,
     });
+ 
 
     // Step 6: Only add question to valid list if it's not a duplicate
     if (!alreadyExists) {
@@ -121,10 +125,24 @@ async function addQuestions(questions) {
         questionCategory,
         questionLevel,
         questionType,
+        timesSkipped,
+        timesAnswered,
       };
 
       // Only attach answers if it's MCQ
-      if (questionType === QUESTION_TYPE.MCQ && Array.isArray(answers)) {
+      if(collection === SCHEMA_MODELS.FINALQUESTION) {
+        // validating if the answer is correct
+        const filteredAnswers = answers.filter((a) => {
+        return a.isCorrect === true;
+      })
+ 
+        newQuestion.answers = filteredAnswers.map((a) => ({
+          answer: a.answer,
+          _id: uuidv4(),
+          isCorrect: a.isCorrect,
+        }));
+      }
+      if (collection === SCHEMA_MODELS.QUESTION && questionType === QUESTION_TYPE.MCQ && Array.isArray(answers)) {
         newQuestion.answers = answers.map((a) => ({
           answer: a.answer,
           _id: uuidv4(),
@@ -146,12 +164,12 @@ async function addQuestions(questions) {
   }
 
   // Step 8: Insert valid questions into DB
-  const insertedQuestions = await Question.insertMany(validQuestions);
+  const insertedQuestions = await collection.insertMany(validQuestions);
 
   return insertedQuestions;
 }
 
-async function updateQuestionById(questionsData) {
+async function updateQuestionById(questionsData, collection) {
   if (!Array.isArray(questionsData) || questionsData.length === 0) {
     throw new ApiError(400, "Questions data must be a non-empty array");
   }
@@ -162,7 +180,8 @@ async function updateQuestionById(questionsData) {
   const idsToUpdate = questionsData.map((q) => q.questionID);
 
   // 2. Fetch all existing questions from DB in one query by IDs
-  const existingQuestions = await Question.find({ _id: { $in: idsToUpdate } });
+  const existingQuestions = await collection.find({ _id: { $in: idsToUpdate } });
+  console.log(existingQuestions)
 
   // 3. Build a Map for quick lookup by ID
   const questionMap = new Map(existingQuestions.map((q) => [q._id, q]));
@@ -208,7 +227,7 @@ async function updateQuestionById(questionsData) {
     }
 
     // 7. Check for duplicates (exclude current question)
-    const duplicate = await Question.findOne({
+    const duplicate = await collection.findOne({
       _id: { $ne: questionID },
       question: normalizedQuestion,
       questionCategory,
@@ -223,7 +242,7 @@ async function updateQuestionById(questionsData) {
     }
 
     // 8. Perform update in DB
-    const updatedQuestion = await Question.findByIdAndUpdate(
+    const updatedQuestion = await collection.findByIdAndUpdate(
       questionID,
       {
         $set: {
@@ -252,7 +271,7 @@ async function updateQuestionById(questionsData) {
   return updatedQuestions;
 }
 
-async function deleteQuestionById(questionDataArray) {
+async function deleteQuestionById(questionDataArray, collection) {
   // Step 1: Validate the input is a non-empty array
   if (!Array.isArray(questionDataArray) || questionDataArray.length === 0) {
     throw new ApiError(
@@ -263,7 +282,7 @@ async function deleteQuestionById(questionDataArray) {
 
   // Step 2: Extract all valid questionIDs
   const questionIDs = questionDataArray
-    .map((q) => q.questionId)
+    .map((q) => q.questionID)
     .filter((id) => typeof id === "string" && id.trim() !== "");
 
   if (questionIDs.length === 0) {
@@ -271,7 +290,7 @@ async function deleteQuestionById(questionDataArray) {
   }
 
   // Step 3: Delete all questions with matching IDs in a single DB call
-  const result = await Question.deleteMany({
+  const result = await collection.deleteMany({
     _id: { $in: questionIDs },
   });
 

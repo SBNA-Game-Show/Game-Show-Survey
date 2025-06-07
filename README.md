@@ -68,11 +68,9 @@ A minimal backend API for managing survey questions and answers, built with Node
 
 Below is a list of endpoints and all the information needed to use them.
 
-### Admin Route:
+### Admin Route: **`api/v1/admin/survey`**
 
-#### **`api/v1/admin/survey`**
-
-- **Add Questions**
+#### **Add Questions**
 
 Submit an array of questions to the database:
 
@@ -132,14 +130,14 @@ Submit an array of questions to the database:
   }
   ```
 
-- **Get Questions and Answers**
+#### **Get Questions and Answers**
 
 Request all questions and their respective answers:
 
 - Method: **`GET`**
 - Headers: `x-api-key: <API_KEY>`
 
-- **Update Question By Id**
+#### **Update Question By Id**
 
 Request to retrieve a specific question and modify its properties:
 
@@ -157,7 +155,7 @@ Request to retrieve a specific question and modify its properties:
   }
   ```
 
-- **Delete Question By Id**
+#### **Delete Question By Id**
 
 Request to delete a question according to its Id value:
 
@@ -173,11 +171,9 @@ Request to delete a question according to its Id value:
   }
   ```
 
-### Final Route:
+### Final Route: **`api/v1/admin/survey/final`**
 
-#### **`api/v1/admin/survey/final`**
-
-- **Post Final Questions**
+#### **Post Final Questions**
 
 Request made to finalize the validated questions and their responses:
 
@@ -243,21 +239,21 @@ Request made to finalize the validated questions and their responses:
 }
 ```
 
-- **Get Final Questions**
+#### **Get Final Questions**
 
 Request made to retrieve all information for the questions and answers in the finalized collection:
 
 - Method: **`GET`**
 - Headers: `x-api-key: <API_KEY>`
 
-- **Post Final Questions**
+#### **Post Final Questions**
 
 Request made to finalize the validated questions and their responses:
 
 - Method: **`POST`**
 - Headers: `x-api-key: <API_KEY>`
 
-- **Update Final Question By Id**
+#### **Update Final Question By Id**
 
 Request made to update any field from the finalized questions and answers:
 
@@ -299,8 +295,9 @@ Request made to update any field from the finalized questions and answers:
 }
 ```
 
-- **Delete Final Question By Id**
-  Request to delete a finalzed question and it's answers by Id:
+#### **Delete Final Question By Id**
+
+Request to delete a finalzed question and it's answers by Id:
   - Method: **`GET`**
   - Headers: `x-api-key: <API_KEY>`
   - Sample Body:
@@ -317,13 +314,13 @@ Request made to update any field from the finalized questions and answers:
 
 #### **`api/v1/survey`**
 
-- **Get Questions**
+#### **Get Questions**
   Request without admin access that retrieves all questions:
 
   - Method: `GET`
   - Headers: `x-api-key: <API_KEY>`
 
-- **Add Answer to Question**
+#### **Add Answer to Question**
   Request that inserts user answers into their respective questions:
 
   - Method: **`PUT`**

@@ -212,6 +212,7 @@ Request made to finalize the validated questions and their responses:
           "isCorrect": false
         }
       ]
+      ]
     },
     {
       "question": "What is the Sanskrit word for water?",
@@ -349,14 +350,17 @@ Request made to update any field from the finalized questions and answers:
 ## Notes
 
 - Question Types - defined in `constants.js`:
+- Question Types - defined in `constants.js`:
   - `Mcq`
   - `Input`
+- Question Categories - defined in `constants.js`:
 - Question Categories - defined in `constants.js`:
   - `Grammar`
   - `Vocabulary`
   - `Literature`
   - `History`
   - `Culture`
+- Question Levels - defined in `constants.js`:
 - Question Levels - defined in `constants.js`:
   - `Beginner`
   - `Intermediate`

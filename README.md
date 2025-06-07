@@ -68,6 +68,8 @@ A minimal backend API for managing survey questions and answers, built with Node
 
 Below is a list of endpoints and all the information needed to use them.
 
+---
+
 ### Admin Route: **`api/v1/admin/survey`**
 
 #### **Add Questions**
@@ -170,6 +172,8 @@ Request to delete a question according to its Id value:
     ]
   }
   ```
+  
+---
 
 ### Final Route: **`api/v1/admin/survey/final`**
 
@@ -309,6 +313,8 @@ Request to delete a finalzed question and it's answers by Id:
     ]
   }
   ```
+
+---
 
 ### Survey Route:
 

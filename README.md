@@ -141,7 +141,7 @@ Request all questions and their respective answers:
 
 #### **Update Question By Id**
 
-Request to retrieve a specific question and modify its properties:
+Request to retrieve specific questions and modify their properties:
 
 - Method: **`PUT`**
 - Headers: `x-api-key: <API_KEY>`
@@ -149,11 +149,15 @@ Request to retrieve a specific question and modify its properties:
 
   ```json
   {
-    "questionID": "68364a7434e454278dd83319",
-    "question": " Name something difficult about learning Sanskrit. ",
-    "questionType": "Input",
-    "questionCategory": "Grammar",
-    "questionLevel": "Beginner"
+     "questions": [
+        {
+          "questionID": "68364a7434e454278dd83319",
+          "question": " Name something difficult about learning Sanskrit. ",
+          "questionType": "Input",
+          "questionCategory": "Grammar",
+          "questionLevel": "Beginner"
+        }
+     ]
   }
   ```
 

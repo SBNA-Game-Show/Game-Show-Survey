@@ -19,21 +19,19 @@ import checkIfAdminRoute from "../middlewares/isAdmin.js";
 const adminRouter = Router();
 
 // [ POST ] METHOD to add questions to DB alongside API-KEY check middleware
-adminRouter
-  .route("/surveyQuestions")
+adminRouter.route("/survey")
   .post(checkApiKey, checkIfAdminRoute, addQuestions);
 
 // [ GET ] METHOD will get all the Questions and Answers for ADMIN
-adminRouter.route("/survey").get(checkApiKey, checkIfAdminRoute, getQuestion);
+adminRouter.route("/survey")
+  .get(checkApiKey, checkIfAdminRoute, getQuestion);
 
 // [ PUT ] METHOD to retrieve one question by ID. Returns all question fields
-adminRouter
-  .route("/survey")
+adminRouter.route("/survey")
   .put(checkApiKey, checkIfAdminRoute, updateQuestionById);
 
 // [ DELETE ] METHOD to delete a question by its ID.
-adminRouter
-  .route("/survey")
+adminRouter.route("/survey")
   .delete(checkApiKey, checkIfAdminRoute, deleteQuestionById);
 
 /////////////////////// ________________________ ///////////////////

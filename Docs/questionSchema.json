@@ -5,6 +5,7 @@
    "questionCategory": "Vocabulary",
    "questionLevel": "Beginner",
    "timesSkipped": {"$numberInt":"5"},
+   "timesAnswered": {"$numberInt":"15"},
    "answers": [
       {"_id": "3b4740f5-bbe7-4789-b171-aff62bc6337c",
       "answer": "Hello",

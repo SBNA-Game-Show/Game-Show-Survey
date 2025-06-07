@@ -62,67 +62,16 @@ A minimal backend API for managing survey questions and answers, built with Node
 
 ---
 
-## Data Structures
-
-### Question Collection Sample
-
-**Question Collection Layout**
-```
-{
-   "_id": "3b4740f5-bbe7-4789-b171-aff62bc6337b",
-   "question": "What is the word for fire in Sanskrit?",
-   "questionType": "Input",
-   "questionCategory": "Vocabulary",
-   "questionLevel": "Beginner",
-   "timesSkipped": {"$numberInt":"5"},
-   "timesAnswered": {"numberInt": "15"},
-   "answers": [
-      {"_id": "3b4740f5-bbe7-4789-b171-aff62bc6337c",
-      "answer": "Hello",
-      "responseCount": {"$numberInt": "10"},
-      "isCorrect": false},
-      {"_id": "3b4740f5-bbe7-4789-b171-aff62bc6337d",
-      "answer": "Hey",
-      "responseCount": {"$numberInt": "5"},
-      "isCorrect": false }
-   ],
-   "timeStamp": true
-}
-```
-
-**User Collection Layout**
-```
-{
-   "_id": "3b4740f5-bbe7-4789-b171-aff62bc6337e",
-   "userId": "u1",
-   "displayName": "Clark",
-   "userEmail": "super@email.com",
-   "answerCount": {"$numberInt": "25"} 
-}
-
-```
-
-**Admin Collection Layout**
-```
-{
-   "_id": "3b4740f5-bbe7-4789-b171-aff62bc6337f",
-   "userId": "ad1",
-   "userName": "Sammy",
-   "userEmail": "sammy@email.com",
-   "password": "encryptedblah",
-   "role": "Super Admin(created from backend")"
-}
-
-```
-
 ## API Endpoint Use Guide
 Below is a list of endpoints and all the information needed to use them.
 
-### Admin Route
+### Admin Route:
+#### api/v1/admin/survey
 
 - **Add Questions**
-Submit an array of questions to the database using `addQuestions` method:
-  - `POST /api/v1/admin/surveyQuestions`
+
+Submit an array of questions to the database:
+  - Method: **`POST`**
   - Headers: `x-api-key: <API_KEY>`
   - Sample Body FOR SUBMITTING INPUT QUESTIONS:
     ```json
@@ -184,22 +133,22 @@ Submit an array of questions to the database using `addQuestions` method:
     }
     ```
 
-    
-
 - **Get Questions and Answers**
-Request all questions and their respective answers using `getQuestion` method:
-  - `GET /api/v1/admin/survey`
+
+Request all questions and their respective answers:
+  - Method: **`GET`**
   - Headers: `x-api-key: <API_KEY>`
 
 - **Update Question By Id**
-Request to retrieve a specific question and modify its properties with `updateQuestionById` method:
-  - `PUT /api/v1/admin/survey`
+
+Request to retrieve a specific question and modify its properties:
+  - Method: **`PUT`**
   - Headers: `x-api-key: <API_KEY>`
   - Sample Body:
     ```json
     {
      "questionID": "68364a7434e454278dd83319",
-     "question": " Name something difficult about learning French. ",
+     "question": " Name something difficult about learning Sanskrit. ",
      "questionType": "Input",
      "questionCategory": "Grammar",
      "questionLevel": "Beginner"
@@ -207,19 +156,27 @@ Request to retrieve a specific question and modify its properties with `updateQu
     ```
 
 - **Delete Question By Id**
-Request to delete a question according to its Id value using `deleteQuestionById` method:
-  - `DELETE /api/v1/admin/survey`
+
+Request to delete a question according to its Id value:
+  - Method: **`DELETE`**
   - Headers: `x-api-key: <API_KEY>`
   - Sample Body:
     ```json
     {
-     "questionID": "68364a7434e454278dd83319",
+       "questions": [
+          {"questionID": "68364a7434e454278dd83319"},
+          {"questionID": "68364a7434e454278dd83310"},
+       ]
     }
     ```
 
+### Final Route:
+#### api/v1/admin/survey/final
+
 - **Post Final Questions**
-Request made to finalize the validated questions and their responses
-  - `POST /api/v1/admin/survey/final`
+
+Request made to finalize the validated questions and their responses:
+  - Method: **`POST`**
   - Headers: `x-api-key: <API_KEY>`
   - Sample Body (Only `isCorrect: true` answers and their respective questions will be inserted to the finalized schema):
   ```json
@@ -248,8 +205,7 @@ Request made to finalize the validated questions and their responses
           "responseCount": 5,
           "isCorrect": false
         }
-      ],
-      "timeStamp": true
+      ]
     },
     {
       "question": "What is the Sanskrit word for water?",
@@ -274,23 +230,89 @@ Request made to finalize the validated questions and their responses
           "responseCount": 4,
           "isCorrect": false
         }
-      ],
-      "timeStamp": true
+      ]
     }
   ]
   }
+   ```
 
+- **Get Final Questions**
 
-### Survey Route
+Request made to retrieve all information for the questions and answers in the finalized collection:
+  - Method: **`GET`**
+  - Headers: `x-api-key: <API_KEY>`
+
+- **Post Final Questions**
+
+Request made to finalize the validated questions and their responses:
+  - Method: **`POST`**
+  - Headers: `x-api-key: <API_KEY>`
+ 
+- **Update Final Question By Id**
+
+Request made to update any field from the finalized questions and answers:
+  - Method: **`PUT`**
+  - Headers: `x-api-key: <API_KEY>`
+  - Sample Body:
+   ```json
+{
+   "questions": [
+      {
+            "questionID": "06fd91a7-a9c5-4335-a0f5-ba6835fa8f72",
+            "question": "name a sanskrit compound type (samasa).",
+            "questionType": "Input",
+            "questionCategory": "Grammar",
+            "questionLevel": "Advanced",
+            "timesSkipped": 0,
+            "timesAnswered": 0,
+            "answers": [
+                {
+                    "answer": "pair",
+                    "isCorrect": true,
+                    "responseCount": 4,
+                    "rank": 0,
+                    "score": 0,
+                    "_id": "f9e61308-ff59-4131-b7f7-8667c0859d01"
+                },
+                {
+                    "answer": "penguin",
+                    "isCorrect": true,
+                    "responseCount": 2,
+                    "rank": 0,
+                    "score": 0,
+                    "_id": "bb133bc7-cef2-4853-9660-3bb937cac819"
+                }
+            ]
+        }
+    ]
+   }
+```
+
+- **Delete Final Question By Id**
+Request to delete a finalzed question and it's answers by Id:
+  - Method: **`GET`**
+  - Headers: `x-api-key: <API_KEY>`
+  - Sample Body:
+  ```json
+  {
+       "questions": [
+          {"questionID": "68364a7434e454278dd83319"},
+          {"questionID": "68364a7434e454278dd83310"},
+       ]
+  }
+  ```
+
+### Survey Route:
+#### api/v1/survey
 
 - **Get Questions**
-Request without admin access that retrieves all questions using `getQuestion` method:
-  - `GET /api/v1/survey/`
+Request without admin access that retrieves all questions:
+  - Method: `GET`
   - Headers: `x-api-key: <API_KEY>`
 
 - **Add Answer to Question**
-Request that inserts user answers into their respective questions with `addAnswerToQuestion` method:
-  - `PUT /api/v1/survey/`
+Request that inserts user answers into their respective questions:
+  - Method: **`PUT`**
   - Headers: `x-api-key: <API_KEY>`
   - Sample Body:
     ```json
@@ -301,9 +323,9 @@ Request that inserts user answers into their respective questions with `addAnswe
           { "_id": "6838bccdb1be6e54cfee3c53" }
         ],
         "answers": [
-          { "answer": "svāgatam" },
-          { "answer": "kuTumba" },
-          { "answer": "agni" }
+          { "answer": "Penguin" },
+          { "answer": "Volcano" },
+          { "answer": "Ackee" }
         ]
     }
 
@@ -311,57 +333,26 @@ Request that inserts user answers into their respective questions with `addAnswe
 
 ---
 
-## Project Structure
-
-```
-src/
-  controllers/
-    admin.controller.js
-    answer.controller.js
-    user.controller.js
-    question.controller.js
-    finalQuestion.controller.js
-  db/
-    index.js
-  middlewares/
-    apiKey.js
-    isAdmin.js
-  models/
-    admin.model.js
-    question.model.js
-    finalQuestion.model.js
-    user.model.js
-  routes/
-    admin.route.js
-    survey.route.js
-  utils/
-    ApiError.js
-    ApiResponse.js
-    asyncHandler.js
-  app.js
-  constants.js
-  index.js
-```
-
----
-
 ## Notes
 
-- Question types are defined in `constants.js`:
+- Question Types - defined in `constants.js`:
   - `Mcq`
   - `Input`
-- Question Categories are (more coming):
+- Question Categories - defined in `constants.js`:
   - `Grammar`
   - `Vocabulary`
   - `Literature`
   - `History`
   - `Culture`
-- Question levels are:
+- Question Levels - defined in `constants.js`:
   - `Beginner`
   - `Intermediate`
   - `Advanced`
+- Schema Models - defined in `enums.js`:
+  - `Question`
+  - `FinalQuestion`
+ 
 - All endpoints require a valid API key via the `x-api-key` header.
-- Pagination is set to 10 questions per page.
 
 ---
 

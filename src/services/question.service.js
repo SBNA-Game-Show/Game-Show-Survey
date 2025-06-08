@@ -329,7 +329,7 @@ async function updateQuestionById(questionsData, collection) {
           questionType,
           answers: answers
             ? answers.map((a) => ({
-                _id: a._id, // if you want to keep the same id or generate new one
+                _id: a.answerID, // if you want to keep the same id or generate new one
                 answer: a.answer.trim().toLowerCase(),
                 responseCount: a.responseCount || 0,
                 isCorrect: a.isCorrect || false,

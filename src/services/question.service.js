@@ -145,9 +145,21 @@ async function addQuestions(questions, collection) {
         // For INPUT type questions, keep only correct answers
         let filteredAnswers = [];
         if (questionType === QUESTION_TYPE.INPUT) {
+          if (answers.length < 5) {
+            throw new ApiError(
+              400,
+              "Input Questions must have atleast 5 valid answers"
+            );
+          }
           filteredAnswers = answers.filter((a) => {
             return a.isCorrect === true;
           });
+        }
+        if (filteredAnswers.length !== 5) {
+          throw new ApiError(
+            400,
+            "There should be exactly 5 Correct Answers for Input Type Questions"
+          );
         }
         // For MCQ type, keep all provided answers
         if (questionType === QUESTION_TYPE.MCQ) {
@@ -230,18 +242,21 @@ async function updateQuestionById(questionsData, collection) {
     } = data;
 
     // Validate required fields
-    if (
-      !questionID ||
-      !question ||
-      !questionCategory ||
-      !questionLevel ||
-      !questionType
-    ) {
+    const missingFields = [];
+
+    if (!questionID) missingFields.push("questionID");
+    if (!question) missingFields.push("question");
+    if (!questionCategory) missingFields.push("questionCategory");
+    if (!questionLevel) missingFields.push("questionLevel");
+    if (!questionType) missingFields.push("questionType");
+
+    if (missingFields.length > 0) {
       throw new ApiError(
         400,
-        `Missing required fields for a question ${question}, QuestionID: ${questionID}, QuestionCatergory: ${questionCategory}, questionType: ${questionType}`
+        `Missing required fields: ${missingFields.join(", ")}`
       );
     }
+
     if (!allowedTypes.includes(questionType)) {
       throw new ApiError(
         400,
@@ -254,7 +269,7 @@ async function updateQuestionById(questionsData, collection) {
       if (missingAnswerId) {
         throw new ApiError(
           400,
-          "Each answer must have a valid _id for update."
+          "Each answer must have a valid answerID for update."
         );
       }
     }
@@ -262,8 +277,8 @@ async function updateQuestionById(questionsData, collection) {
       // INPUT questions must have exactly one correct answer
       if (questionType === QUESTION_TYPE.INPUT) {
         const correctAnswers = answers.filter((a) => a.isCorrect === true);
-        if (correctAnswers.length !== 1) {
-          throw new ApiError(400, "Answer must be set to Correct");
+        if (correctAnswers.length !== 5) {
+          throw new ApiError(400, "Must have 5 answers set to Correct");
         }
       }
     }
@@ -394,11 +409,11 @@ async function addAnswerToQuestion(questions, answers) {
     const question = questions[i];
     const answerInput = answers[i];
 
-    if (!question._id || question._id.trim() === "") {
+    if (!question.questionID || question.questionID.trim() === "") {
       throw new ApiError(400, "Missing question ID");
     }
 
-    const qID = question._id;
+    const qID = question.questionID;
     const answerText = answerInput?.answer?.toLowerCase().trim();
 
     // Case 1: Answer is blank — increment `timesSkipped`

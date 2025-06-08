@@ -216,7 +216,6 @@ Request made to finalize the validated questions and their responses:
           "isCorrect": false
         }
       ]
-      ]
     },
     {
       "question": "What is the Sanskrit word for water?",

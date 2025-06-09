@@ -356,10 +356,8 @@ Request to delete a finalzed question and it's answers by Id:
 ## Notes
 
 - Question Types - defined in `constants.js`:
-- Question Types - defined in `constants.js`:
   - `Mcq`
   - `Input`
-- Question Categories - defined in `constants.js`:
 - Question Categories - defined in `constants.js`:
   - `Grammar`
   - `Vocabulary`
@@ -367,12 +365,10 @@ Request to delete a finalzed question and it's answers by Id:
   - `History`
   - `Culture`
 - Question Levels - defined in `constants.js`:
-- Question Levels - defined in `constants.js`:
   - `Beginner`
   - `Intermediate`
   - `Advanced`
 - Schema Models - defined in `enums.js`:
-
   - `Question`
   - `FinalQuestion`
 

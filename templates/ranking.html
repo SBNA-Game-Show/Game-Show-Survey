@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Ranking Processor Results</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body>
+<div class="container mt-4">
+    <h1>Ranking Processor Results</h1>
+    <a href="/similarity" class="btn btn-primary mb-3">View Similarity Results</a>
+    {% for question in questions %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <strong>Question:</strong> {{ question.question }}
+            </div>
+            <div class="card-body">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Answer</th>
+                            <th>Response Count</th>
+                            <th>Rank</th>
+                            <th>Score</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for answer in question.answers %}
+                        {% if answer.isCorrect %}
+                        <tr>
+                            <td>{{ answer.answer }}</td>
+                            <td>{{ answer.responseCount }}</td>
+                            <td>{{ answer.rank }}</td>
+                            <td>{{ answer.score }}</td>
+                        </tr>
+                        {% endif %}
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+</body>
+</html> 

@@ -1,41 +1,618 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <title>Similarity Processor Results</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Similarity Processing Results - Survey Analytics</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f8fafc;
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .header {
+            background: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header h1 {
+            color: #7c3aed;
+            font-size: 1.5rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .header-icon {
+            width: 24px;
+            height: 24px;
+            background: #7c3aed;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.875rem;
+        }
+
+        .btn-primary {
+            background: #7c3aed;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #6d28d9;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #7c3aed;
+            border: 1px solid #e5e7eb;
+        }
+
+        .btn-secondary:hover {
+            background: #f9fafb;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #7c3aed;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .questions-grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .question-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .question-header {
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #7c3aed, #8b5cf6);
+            color: white;
+        }
+
+        .question-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .question-meta {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.875rem;
+            opacity: 0.9;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        .answers-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .answers-table th {
+            background: #f8fafc;
+            color: #374151;
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .answers-table td {
+            padding: 1rem;
+            border-bottom: 1px solid #f3f4f6;
+            vertical-align: middle;
+        }
+
+        .answers-table tr:hover {
+            background: #f9fafb;
+        }
+
+        .answer-text {
+            font-weight: 500;
+            color: #111827;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .badge-correct {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge-incorrect {
+            background: #fef2f2;
+            color: #991b1b;
+        }
+
+        .badge-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .response-count {
+            font-weight: 600;
+            color: #7c3aed;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #6b7280;
+        }
+
+        .empty-state h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+            color: #374151;
+        }
+
+        .process-info {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .process-info h2 {
+            color: #7c3aed;
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .process-info p {
+            color: #6b7280;
+            line-height: 1.6;
+            margin-bottom: 0.5rem;
+        }
+
+        .filter-section {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .filter-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .filter-label {
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.875rem;
+        }
+
+        .filter-select {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            background: white;
+            color: #374151;
+            cursor: pointer;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: #7c3aed;
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 0.25rem 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            background: white;
+            color: #374151;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+        }
+
+        .filter-btn.active {
+            background: #7c3aed;
+            color: white;
+            border-color: #7c3aed;
+        }
+
+        .filter-btn:hover {
+            border-color: #7c3aed;
+            color: #7c3aed;
+        }
+
+        .filter-btn.active:hover {
+            background: #6d28d9;
+            color: white;
+        }
+
+        .highlight {
+            background: #fef3c7;
+            padding: 0.125rem 0.25rem;
+            border-radius: 4px;
+            color: #92400e;
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+
+            .nav-buttons {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .container {
+                padding: 1rem;
+            }
+
+            .question-meta {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+    </style>
 </head>
+
 <body>
-<div class="container mt-4">
-    <h1>Similarity Processor Results</h1>
-    <a href="/ranking" class="btn btn-primary mb-3">View Ranking Results</a>
-    {% for question in questions %}
-        <div class="card mb-4">
-            <div class="card-header">
-                <strong>Question:</strong> {{ question.question }}
-            </div>
-            <div class="card-body">
-                <table class="table table-bordered">
-                    <thead>
-                        <tr>
-                            <th>Answer</th>
-                            <th>Is Correct</th>
-                            <th>Response Count</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    {% for answer in question.answers %}
-                        <tr>
-                            <td>{{ answer.answer }}</td>
-                            <td>{{ answer.isCorrect }}</td>
-                            <td>{{ answer.responseCount }}</td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
+    <header class="header">
+        <h1>
+            <div class="header-icon">S</div>
+            Similarity Processing Results
+        </h1>
+        <div class="nav-buttons">
+            <a href="/ranking" class="btn btn-primary">View Ranking Results</a>
+            <a href="/" class="btn btn-secondary">← Back to Dashboard</a>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Filters Section -->
+        <div class="filter-section">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label class="filter-label">Category</label>
+                    <select class="filter-select" id="categoryFilter">
+                        <option value="">All Categories</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">Level</label>
+                    <select class="filter-select" id="levelFilter">
+                        <option value="">All Levels</option>
+                        <option value="Beginner">Beginner</option>
+                        <option value="Intermediate">Intermediate</option>
+                        <option value="Advanced">Advanced</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">Answer Status</label>
+                    <div class="filter-buttons">
+                        <button class="filter-btn active" data-filter="all">All Answers</button>
+                        <button class="filter-btn" data-filter="approved">Approved Only</button>
+                        <button class="filter-btn" data-filter="pending">Pending Review</button>
+                    </div>
+                </div>
             </div>
         </div>
-    {% endfor %}
-</div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">{{ questions|length }}</div>
+                <div class="stat-label">Total Questions</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">
+                    {% set total_answers = 0 %}
+                    {% for question in questions %}
+                    {% set total_answers = total_answers + question.answers|length %}
+                    {% endfor %}
+                    {{ total_answers }}
+                </div>
+                <div class="stat-label">Merged Answers</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">
+                    {% set total_responses = 0 %}
+                    {% for question in questions %}
+                    {% for answer in question.answers %}
+                    {% set total_responses = total_responses + answer.responseCount %}
+                    {% endfor %}
+                    {% endfor %}
+                    {{ total_responses }}
+                </div>
+                <div class="stat-label">Total Responses</div>
+            </div>
+        </div>
+
+        {% if questions %}
+        <div class="questions-grid">
+            {% for question in questions %}
+            <div class="question-card" data-category="{{ question.questionCategory or 'Uncategorized' }}"
+                data-level="{{ question.questionLevel or 'Unspecified' }}">
+                <div class="question-header">
+                    <div class="question-title">{{ question.question }}</div>
+                    <div class="question-meta">
+                        <div class="meta-item">
+                            <span>📁 {{ question.questionCategory or 'Uncategorized' }}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span>📊 {{ question.questionLevel or 'Unspecified' }}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span>💭 {{ question.answers|length }} answers</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="answers-table">
+                        <thead>
+                            <tr>
+                                <th>Answer Text</th>
+                                <th>Status</th>
+                                <th>Response Count</th>
+                                <th>Processing Stage</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for answer in question.answers %}
+                            <tr class="answer-row"
+                                data-status="{% if answer.isCorrect == True %}correct{% elif answer.isCorrect == False %}incorrect{% else %}pending{% endif %}">
+                                <td class="answer-text">{{ answer.answer }}</td>
+                                <td>
+                                    {% if answer.isCorrect == True %}
+                                    <span class="badge badge-correct">✓ Correct</span>
+                                    {% elif answer.isCorrect == False %}
+                                    <span class="badge badge-incorrect">✗ Incorrect</span>
+                                    {% else %}
+                                    <span class="badge badge-pending">⏳ Pending Review</span>
+                                    {% endif %}
+                                </td>
+                                <td class="response-count">{{ answer.responseCount }}</td>
+                                <td>
+                                    <span class="badge badge-pending">Similarity Merged</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <h3>No Questions Found</h3>
+            <p>No questions available for similarity processing.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        // Initialize filters
+        document.addEventListener('DOMContentLoaded', function () {
+            // Populate category filter
+            const categories = new Set();
+            document.querySelectorAll('[data-category]').forEach(el => {
+                const category = el.getAttribute('data-category');
+                if (category && category !== 'Uncategorized') {
+                    categories.add(category);
+                }
+            });
+
+            const categoryFilter = document.getElementById('categoryFilter');
+            categories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category;
+                option.textContent = category;
+                categoryFilter.appendChild(option);
+            });
+
+            // Filter functionality
+            const levelFilter = document.getElementById('levelFilter');
+            const statusButtons = document.querySelectorAll('.filter-btn');
+
+            function applyFilters() {
+                const selectedCategory = categoryFilter.value;
+                const selectedLevel = levelFilter.value;
+                const selectedStatus = document.querySelector('.filter-btn.active').getAttribute('data-filter');
+
+                document.querySelectorAll('.question-card').forEach(card => {
+                    const cardCategory = card.getAttribute('data-category');
+                    const cardLevel = card.getAttribute('data-level');
+
+                    let showCard = true;
+
+                    // Category filter
+                    if (selectedCategory && cardCategory !== selectedCategory) {
+                        showCard = false;
+                    }
+
+                    // Level filter
+                    if (selectedLevel && cardLevel !== selectedLevel) {
+                        showCard = false;
+                    }
+
+                    // Show/hide card
+                    card.style.display = showCard ? 'block' : 'none';
+
+                    // Answer status filter (only if card is visible)
+                    if (showCard) {
+                        const answerRows = card.querySelectorAll('.answer-row');
+                        answerRows.forEach(row => {
+                            const answerStatus = row.getAttribute('data-status');
+                            let showRow = true;
+
+                            if (selectedStatus === 'approved' && answerStatus === 'pending') {
+                                showRow = false;
+                            } else if (selectedStatus === 'pending' && answerStatus !== 'pending') {
+                                showRow = false;
+                            }
+
+                            row.style.display = showRow ? 'table-row' : 'none';
+                        });
+                    }
+                });
+
+                updateStats();
+            }
+
+            function updateStats() {
+                const visibleQuestions = document.querySelectorAll('.question-card[style="display: block"], .question-card:not([style*="display: none"])').length;
+                let visibleAnswers = 0;
+                let totalResponses = 0;
+
+                document.querySelectorAll('.question-card').forEach(card => {
+                    if (card.style.display !== 'none') {
+                        card.querySelectorAll('.answer-row').forEach(row => {
+                            if (row.style.display !== 'none') {
+                                visibleAnswers++;
+                                const responseCountElement = row.querySelector('.response-count');
+                                if (responseCountElement) {
+                                    const responseCount = parseInt(responseCountElement.textContent) || 0;
+                                    totalResponses += responseCount;
+                                }
+                            }
+                        });
+                    }
+                });
+
+                // Update stat cards
+                const statCards = document.querySelectorAll('.stat-number');
+                if (statCards[0]) statCards[0].textContent = visibleQuestions;
+                if (statCards[1]) statCards[1].textContent = visibleAnswers;
+                if (statCards[2]) statCards[2].textContent = totalResponses;
+            }
+
+            // Event listeners
+            categoryFilter.addEventListener('change', applyFilters);
+            levelFilter.addEventListener('change', applyFilters);
+
+            statusButtons.forEach(button => {
+                button.addEventListener('click', function () {
+                    statusButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    applyFilters();
+                });
+            });
+
+            // Initial stats update
+            updateStats();
+        });
+    </script>
 </body>
-</html> 
+
+</html>

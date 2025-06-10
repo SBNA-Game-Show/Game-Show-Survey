@@ -1,231 +1,305 @@
+"""
+Refactored Ranking Service - Clean and modular
+"""
+
 import logging
-import json
-from typing import List, Dict
+from typing import List, Dict, Tuple
 from config.settings import Config
+from utils.data_formatters import QuestionFormatter, DataValidator
+from constants import AnswerFields, LogMessages, ErrorMessages
 
 logger = logging.getLogger('survey_analytics')
 
-class RankingService:
-    def __init__(self, db_handler):
-        self.db = db_handler
-        self.scoring_values = Config.SCORING_VALUES
-        logger.info(f"RankingService initialized with scoring values: {self.scoring_values}")
+
+class AnswerRanker:
+    """Handles the core ranking logic for answers"""
     
-    def rank_and_score_answers(self, answers: List[Dict]) -> tuple:
+    def __init__(self, scoring_values: List[int]):
+        self.scoring_values = scoring_values
+    
+    def rank_answers(self, answers: List[Dict]) -> Tuple[List[Dict], int, int]:
         """Rank all correct answers by responseCount, keep incorrect answers unranked"""
         if not answers:
             return answers, 0, 0
         
         logger.debug(f"Processing {len(answers)} answers for ranking")
         
-        # Separate correct and incorrect answers
-        correct_answers = [a for a in answers if a.get('isCorrect', False)]
-        incorrect_answers = [a for a in answers if not a.get('isCorrect', False)]
+        correct_answers, incorrect_answers = self._separate_answers(answers)
+        ranked_correct, answers_ranked, answers_scored = self._rank_correct_answers(correct_answers)
+        processed_incorrect = self._reset_incorrect_answers(incorrect_answers)
+        
+        # Combine: correct answers first (ranked), then incorrect answers
+        all_answers = ranked_correct + processed_incorrect
+        
+        logger.debug(f"Ranking complete: {answers_ranked} ranked, {answers_scored} scored")
+        return all_answers, answers_ranked, answers_scored
+    
+    def _separate_answers(self, answers: List[Dict]) -> Tuple[List[Dict], List[Dict]]:
+        """Separate correct and incorrect answers"""
+        correct_answers = [a for a in answers if a.get(AnswerFields.IS_CORRECT, False)]
+        incorrect_answers = [a for a in answers if not a.get(AnswerFields.IS_CORRECT, False)]
         
         logger.debug(f"Found {len(correct_answers)} correct answers, {len(incorrect_answers)} incorrect answers")
+        return correct_answers, incorrect_answers
+    
+    def _rank_correct_answers(self, correct_answers: List[Dict]) -> Tuple[List[Dict], int, int]:
+        """Rank and score correct answers by responseCount"""
+        if not correct_answers:
+            return [], 0, 0
         
-        # Sort correct answers by responseCount (highest first)
-        correct_answers.sort(key=lambda x: x.get('responseCount', 0), reverse=True)
+        # Sort by responseCount (highest first)
+        correct_answers.sort(key=lambda x: x.get(AnswerFields.RESPONSE_COUNT, 0), reverse=True)
         
         answers_ranked = 0
         answers_scored = 0
         
-        # Rank and score correct answers
         for i, answer in enumerate(correct_answers):
             rank = i + 1
             score = self.scoring_values[i] if i < len(self.scoring_values) else 0
             
-            answer['rank'] = rank
-            answer['score'] = score
+            answer[AnswerFields.RANK] = rank
+            answer[AnswerFields.SCORE] = score
             answers_ranked += 1
             
             if score > 0:
                 answers_scored += 1
             
-            logger.debug(f"Ranked answer '{answer.get('answer', '')[:30]}...' - "
-                        f"rank: {rank}, score: {score}, responseCount: {answer.get('responseCount', 0)}")
+            self._log_answer_ranking(answer, rank, score)
         
-        # Set incorrect answers to rank=0, score=0
-        for answer in incorrect_answers:
-            answer['rank'] = 0
-            answer['score'] = 0
-            logger.debug(f"Set incorrect answer '{answer.get('answer', '')[:30]}...' to rank=0, score=0")
-        
-        # Combine: correct answers first (ranked), then incorrect answers
-        all_answers = correct_answers + incorrect_answers
-        
-        logger.debug(f"Ranking complete: {answers_ranked} ranked, {answers_scored} scored")
-        return all_answers, answers_ranked, answers_scored
+        return correct_answers, answers_ranked, answers_scored
     
-    def process_question_ranking(self, question: Dict) -> tuple:
+    def _reset_incorrect_answers(self, incorrect_answers: List[Dict]) -> List[Dict]:
+        """Set incorrect answers to rank=0, score=0"""
+        for answer in incorrect_answers:
+            answer[AnswerFields.RANK] = 0
+            answer[AnswerFields.SCORE] = 0
+            logger.debug(f"Set incorrect answer '{answer.get(AnswerFields.ANSWER, '')[:30]}...' to rank=0, score=0")
+        
+        return incorrect_answers
+    
+    def _log_answer_ranking(self, answer: Dict, rank: int, score: int) -> None:
+        """Log individual answer ranking details"""
+        logger.debug(f"Ranked answer '{answer.get(AnswerFields.ANSWER, '')[:30]}...' - "
+                    f"rank: {rank}, score: {score}, responseCount: {answer.get(AnswerFields.RESPONSE_COUNT, 0)}")
+
+
+class QuestionProcessor:
+    """Handles processing of individual questions"""
+    
+    def __init__(self, answer_ranker: AnswerRanker):
+        self.answer_ranker = answer_ranker
+    
+    def process_question(self, question: Dict) -> Tuple[Dict, int, int]:
         """Process ranking for a single question"""
-        question_id = question.get('_id', question.get('questionID', 'UNKNOWN'))
+        question_id = QuestionFormatter.get_question_id(question)
         
-        if not question.get('answers'):
-            logger.debug(f"Skipping question {question_id} - no answers")
+        if not self._should_process_question(question, question_id):
             return question, 0, 0
         
-        # Check if question has any correct answers
-        has_correct_answers = any(a.get('isCorrect', False) for a in question['answers'])
+        self._log_question_processing_start(question, question_id)
         
-        if not has_correct_answers:
-            logger.debug(f"Skipping question {question_id} - no correct answers marked")
-            return question, 0, 0
-        
-        logger.debug(f"Processing ranking for question {question_id} with {len(question['answers'])} answers")
-        
-        # Log the answers before processing
-        for i, answer in enumerate(question['answers']):
-            logger.debug(f"Answer {i}: '{answer.get('answer', '')[:50]}...' - "
-                        f"isCorrect: {answer.get('isCorrect')}, "
-                        f"responseCount: {answer.get('responseCount', 0)}")
-        
-        ranked_answers, answers_ranked, answers_scored = self.rank_and_score_answers(question['answers'])
+        ranked_answers, answers_ranked, answers_scored = self.answer_ranker.rank_answers(question['answers'])
         question['answers'] = ranked_answers
         
-        logger.debug(f"Question {question_id}: ranked {answers_ranked} answers, scored {answers_scored} answers")
-        
-        # Log the final ranking
-        for i, answer in enumerate(question['answers']):
-            logger.debug(f"Final Answer {i}: rank={answer.get('rank', 0)}, score={answer.get('score', 0)}")
+        self._log_question_processing_complete(question_id, answers_ranked, answers_scored)
         
         return question, answers_ranked, answers_scored
     
+    def _should_process_question(self, question: Dict, question_id: str) -> bool:
+        """Check if question should be processed"""
+        if not question.get('answers'):
+            logger.debug(f"Skipping question {question_id} - no answers")
+            return False
+        
+        has_correct_answers = any(a.get(AnswerFields.IS_CORRECT, False) for a in question['answers'])
+        if not has_correct_answers:
+            logger.debug(f"Skipping question {question_id} - {ErrorMessages.NO_CORRECT_ANSWERS}")
+            return False
+        
+        return True
+    
+    def _log_question_processing_start(self, question: Dict, question_id: str) -> None:
+        """Log details before processing question"""
+        logger.debug(f"Processing ranking for question {question_id} with {len(question['answers'])} answers")
+        
+        for i, answer in enumerate(question['answers']):
+            logger.debug(f"Answer {i}: '{answer.get(AnswerFields.ANSWER, '')[:50]}...' - "
+                        f"isCorrect: {answer.get(AnswerFields.IS_CORRECT)}, "
+                        f"responseCount: {answer.get(AnswerFields.RESPONSE_COUNT, 0)}")
+    
+    def _log_question_processing_complete(self, question_id: str, answers_ranked: int, answers_scored: int) -> None:
+        """Log completion details"""
+        logger.debug(f"Question {question_id}: ranked {answers_ranked} answers, scored {answers_scored} answers")
+
+
+class RankingService:
+    """Main service for handling answer ranking operations"""
+    
+    def __init__(self, db_handler):
+        self.db = db_handler
+        self.answer_ranker = AnswerRanker(Config.SCORING_VALUES)
+        self.question_processor = QuestionProcessor(self.answer_ranker)
+        logger.info(f"RankingService initialized with scoring values: {Config.SCORING_VALUES}")
+    
+    def rank_and_score_answers(self, answers: List[Dict]) -> Tuple[List[Dict], int, int]:
+        """Rank all correct answers by responseCount, keep incorrect answers unranked"""
+        return self.answer_ranker.rank_answers(answers)
+    
+    def process_question_ranking(self, question: Dict) -> Tuple[Dict, int, int]:
+        """Process ranking for a single question"""
+        return self.question_processor.process_question(question)
+    
     def validate_question_data(self, question: Dict) -> bool:
         """Validate question data before sending to API"""
-        question_id = question.get('_id') or question.get('questionID')
-        
-        if not question_id:
-            logger.error(f"Question missing ID: {question}")
-            return False
-        
-        if not question.get('answers'):
-            logger.warning(f"Question {question_id} has no answers")
-            return False
-        
-        # Validate each answer
-        for i, answer in enumerate(question['answers']):
-            if not isinstance(answer.get('answer'), str):
-                logger.error(f"Question {question_id}, answer {i}: 'answer' field must be string")
-                return False
-            
-            if not isinstance(answer.get('isCorrect'), bool):
-                logger.error(f"Question {question_id}, answer {i}: 'isCorrect' field must be boolean")
-                return False
-            
-            if not isinstance(answer.get('responseCount'), int):
-                logger.error(f"Question {question_id}, answer {i}: 'responseCount' field must be integer")
-                return False
-            
-            if not isinstance(answer.get('rank'), int):
-                logger.error(f"Question {question_id}, answer {i}: 'rank' field must be integer")
-                return False
-            
-            if not isinstance(answer.get('score'), int):
-                logger.error(f"Question {question_id}, answer {i}: 'score' field must be integer")
-                return False
-        
-        logger.debug(f"Question {question_id} validation passed")
-        return True
+        return DataValidator.validate_question(question)
     
     def process_all_questions(self) -> Dict:
         """Process ranking for all questions that have correct answers"""
         try:
-            logger.info("Starting ranking process for all questions")
+            logger.info(LogMessages.PROCESSING_START)
             
-            # Fetch all questions from API
-            questions = self.db.fetch_all_questions()
-            
+            questions = self._fetch_questions()
             if not questions:
-                logger.warning("No questions found in API")
-                return {
-                    "total_questions": 0,
-                    "processed_count": 0,
-                    "skipped_count": 0,
-                    "updated_count": 0,
-                    "failed_count": 0,
-                    "answers_ranked": 0,
-                    "answers_scored": 0
-                }
+                return self._create_empty_result()
             
             logger.info(f"Found {len(questions)} questions to process")
             
-            processed_questions = []
-            total_answers_ranked = 0
-            total_answers_scored = 0
-            processed_count = 0
-            skipped_count = 0
-            validation_failed = 0
+            processing_result = self._process_questions_batch(questions)
+            update_result = self._update_processed_questions(processing_result['processed_questions'])
             
-            # Process each question
-            for question in questions:
-                question_id = question.get('_id', question.get('questionID', 'UNKNOWN'))
-                
-                if question.get('answers'):
-                    # Check if question has admin-approved answers
-                    has_correct = any(a.get('isCorrect', False) for a in question['answers'])
-                    
-                    if has_correct:
-                        logger.debug(f"Processing question {question_id}...")
-                        processed_question, answers_ranked, answers_scored = self.process_question_ranking(question)
-                        
-                        # Validate the processed question before adding to update list
-                        if self.validate_question_data(processed_question):
-                            processed_questions.append(processed_question)
-                            total_answers_ranked += answers_ranked
-                            total_answers_scored += answers_scored
-                            processed_count += 1
-                            logger.debug(f"✅ Processed question {question_id}")
-                        else:
-                            validation_failed += 1
-                            logger.error(f"❌ Validation failed for question {question_id}")
-                    else:
-                        skipped_count += 1
-                        logger.debug(f"⏭️ Skipped question {question_id} - no correct answers")
-                else:
-                    skipped_count += 1
-                    logger.debug(f"⏭️ Skipped question {question_id} - no answers")
-            
-            logger.info(f"Processing complete: {processed_count} processed, {skipped_count} skipped, {validation_failed} validation failed")
-            logger.info(f"Total answers ranked: {total_answers_ranked}, scored: {total_answers_scored}")
-            
-            # Update API with processed questions
-            if processed_questions:
-                logger.info(f"Updating {len(processed_questions)} questions in API")
-                
-                # Log sample question structure before sending
-                if len(processed_questions) > 0:
-                    sample = processed_questions[0]
-                    logger.debug(f"Sample question structure being sent:")
-                    logger.debug(json.dumps({
-                        "questionID": sample.get('_id') or sample.get('questionID'),
-                        "answers": [{
-                            "answer": a.get('answer'),
-                            "isCorrect": a.get('isCorrect'),
-                            "responseCount": a.get('responseCount'),
-                            "rank": a.get('rank'),
-                            "score": a.get('score'),
-                            "answerID": a.get('_id') or a.get('answerID', 'NO_ID')
-                        } for a in sample.get('answers', [])[:1]]  # Just first answer for brevity
-                    }, indent=2))
-                
-                update_result = self.db.bulk_update_questions(processed_questions)
-            else:
-                logger.warning("No questions to update")
-                update_result = {"updated_count": 0, "failed_count": 0}
-            
-            return {
-                "total_questions": len(questions),
-                "processed_count": processed_count,
-                "skipped_count": skipped_count,
-                "updated_count": update_result["updated_count"],
-                "failed_count": update_result["failed_count"],
-                "answers_ranked": total_answers_ranked,
-                "answers_scored": total_answers_scored,
-                "validation_failed": validation_failed
-            }
+            return self._combine_results(processing_result, update_result, len(questions))
             
         except Exception as e:
-            logger.error(f"Ranking processing failed: {str(e)}")
+            logger.error(LogMessages.PROCESSING_FAILED.format(error=str(e)))
             logger.error(f"Exception details: {type(e).__name__}: {str(e)}")
             raise
+    
+    def _fetch_questions(self) -> List[Dict]:
+        """Fetch all questions from database"""
+        questions = self.db.fetch_all_questions()
+        
+        if not questions:
+            logger.warning("No questions found in API")
+        
+        return questions
+    
+    def _create_empty_result(self) -> Dict:
+        """Create empty result when no questions found"""
+        return {
+            "total_questions": 0,
+            "processed_count": 0,
+            "skipped_count": 0,
+            "updated_count": 0,
+            "failed_count": 0,
+            "answers_ranked": 0,
+            "answers_scored": 0
+        }
+    
+    def _process_questions_batch(self, questions: List[Dict]) -> Dict:
+        """Process a batch of questions for ranking"""
+        processed_questions = []
+        total_answers_ranked = 0
+        total_answers_scored = 0
+        processed_count = 0
+        skipped_count = 0
+        validation_failed = 0
+        
+        for question in questions:
+            result = self._process_single_question_in_batch(question)
+            
+            if result['processed']:
+                processed_questions.append(result['question'])
+                total_answers_ranked += result['answers_ranked']
+                total_answers_scored += result['answers_scored']
+                processed_count += 1
+            elif result['validation_failed']:
+                validation_failed += 1
+            else:
+                skipped_count += 1
+        
+        logger.info(f"Processing complete: {processed_count} processed, {skipped_count} skipped, {validation_failed} validation failed")
+        logger.info(f"Total answers ranked: {total_answers_ranked}, scored: {total_answers_scored}")
+        
+        return {
+            'processed_questions': processed_questions,
+            'processed_count': processed_count,
+            'skipped_count': skipped_count,
+            'validation_failed': validation_failed,
+            'total_answers_ranked': total_answers_ranked,
+            'total_answers_scored': total_answers_scored
+        }
+    
+    def _process_single_question_in_batch(self, question: Dict) -> Dict:
+        """Process a single question within a batch"""
+        question_id = QuestionFormatter.get_question_id(question)
+        
+        # Check if question has answers and correct answers
+        if not question.get('answers'):
+            logger.debug(f"⏭️ Skipped question {question_id} - no answers")
+            return {'processed': False, 'validation_failed': False}
+        
+        has_correct = any(a.get(AnswerFields.IS_CORRECT, False) for a in question['answers'])
+        if not has_correct:
+            logger.debug(f"⏭️ Skipped question {question_id} - {ErrorMessages.NO_CORRECT_ANSWERS}")
+            return {'processed': False, 'validation_failed': False}
+        
+        # Process the question
+        logger.debug(f"Processing question {question_id}...")
+        processed_question, answers_ranked, answers_scored = self.question_processor.process_question(question)
+        
+        # Validate the processed question
+        if not DataValidator.validate_question(processed_question):
+            logger.error(ErrorMessages.VALIDATION_FAILED.format(id=question_id))
+            return {'processed': False, 'validation_failed': True}
+        
+        logger.debug(f"✅ Processed question {question_id}")
+        return {
+            'processed': True,
+            'validation_failed': False,
+            'question': processed_question,
+            'answers_ranked': answers_ranked,
+            'answers_scored': answers_scored
+        }
+    
+    def _update_processed_questions(self, processed_questions: List[Dict]) -> Dict:
+        """Update processed questions in the database"""
+        if not processed_questions:
+            logger.warning("No questions to update")
+            return {"updated_count": 0, "failed_count": 0}
+        
+        logger.info(f"Updating {len(processed_questions)} questions in API")
+        
+        # Log sample question structure
+        self._log_sample_question_structure(processed_questions[0])
+        
+        return self.db.bulk_update_questions(processed_questions)
+    
+    def _log_sample_question_structure(self, sample_question: Dict) -> None:
+        """Log sample question structure for debugging"""
+        import json
+        logger.debug("Sample question structure being sent:")
+        sample_structure = {
+            "questionID": sample_question.get('_id') or sample_question.get('questionID'),
+            "answers": [{
+                "answer": a.get(AnswerFields.ANSWER),
+                "isCorrect": a.get(AnswerFields.IS_CORRECT),
+                "responseCount": a.get(AnswerFields.RESPONSE_COUNT),
+                "rank": a.get(AnswerFields.RANK),
+                "score": a.get(AnswerFields.SCORE),
+                "answerID": a.get('_id') or a.get('answerID', 'NO_ID')
+            } for a in sample_question.get('answers', [])[:1]]  # Just first answer for brevity
+        }
+        logger.debug(json.dumps(sample_structure, indent=2))
+    
+    def _combine_results(self, processing_result: Dict, update_result: Dict, total_questions: int) -> Dict:
+        """Combine processing and update results"""
+        return {
+            "total_questions": total_questions,
+            "processed_count": processing_result['processed_count'],
+            "skipped_count": processing_result['skipped_count'],
+            "updated_count": update_result["updated_count"],
+            "failed_count": update_result["failed_count"],
+            "answers_ranked": processing_result['total_answers_ranked'],
+            "answers_scored": processing_result['total_answers_scored'],
+            "validation_failed": processing_result['validation_failed']
+        }

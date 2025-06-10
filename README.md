@@ -286,7 +286,7 @@ Request made to update any field from the finalized questions and answers:
           "responseCount": 4,
           "rank": 0,
           "score": 0,
-          "_id": "f9e61308-ff59-4131-b7f7-8667c0859d01"
+          "answerID": "f9e61308-ff59-4131-b7f7-8667c0859d01"
         },
         {
           "answer": "penguin",
@@ -294,7 +294,7 @@ Request made to update any field from the finalized questions and answers:
           "responseCount": 2,
           "rank": 0,
           "score": 0,
-          "_id": "bb133bc7-cef2-4853-9660-3bb937cac819"
+          "answerID": "bb133bc7-cef2-4853-9660-3bb937cac819"
         }
       ]
     }
@@ -339,9 +339,9 @@ Request to delete a finalzed question and it's answers by Id:
     ```json
     {
       "questions": [
-        { "_id": "6838bccdb1be6e54cfee3c51" },
-        { "_id": "6838bccdb1be6e54cfee3c52" },
-        { "_id": "6838bccdb1be6e54cfee3c53" }
+        { "questionID": "6838bccdb1be6e54cfee3c51" },
+        { "questionID": "6838bccdb1be6e54cfee3c52" },
+        { "questionID": "6838bccdb1be6e54cfee3c53" }
       ],
       "answers": [
         { "answer": "Penguin" },

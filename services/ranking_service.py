@@ -8,6 +8,7 @@ class RankingService:
     def __init__(self, db_handler):
         self.db = db_handler
         self.scoring_values = Config.SCORING_VALUES
+        logger.info(f"RankingService initialized with scoring values: {self.scoring_values}")
     
     def rank_and_score_answers(self, answers: List[Dict]) -> tuple:
         """Rank all correct answers by responseCount, keep incorrect answers unranked"""
@@ -32,6 +33,9 @@ class RankingService:
             answers_ranked += 1
             if answer['score'] > 0:
                 answers_scored += 1
+            
+            logger.debug(f"Ranked answer '{answer.get('answer', '')[:30]}...' - "
+                        f"rank: {rank}, score: {answer['score']}, responseCount: {answer.get('responseCount', 0)}")
         
         # Set incorrect answers to rank=0, score=0
         for answer in incorrect_answers:
@@ -45,27 +49,38 @@ class RankingService:
     
     def process_question_ranking(self, question: Dict) -> tuple:
         """Process ranking for a single question"""
+        question_id = question.get('_id', 'UNKNOWN')
+        
         if not question.get('answers'):
+            logger.debug(f"Skipping question {question_id} - no answers")
             return question, 0, 0
         
         # Check if question has any correct answers
         has_correct_answers = any(a.get('isCorrect', False) for a in question['answers'])
         
         if not has_correct_answers:
+            logger.debug(f"Skipping question {question_id} - no correct answers marked")
             return question, 0, 0
+        
+        logger.debug(f"Processing ranking for question {question_id} with {len(question['answers'])} answers")
         
         ranked_answers, answers_ranked, answers_scored = self.rank_and_score_answers(question['answers'])
         question['answers'] = ranked_answers
+        
+        logger.debug(f"Question {question_id}: ranked {answers_ranked} answers, scored {answers_scored} answers")
         
         return question, answers_ranked, answers_scored
     
     def process_all_questions(self) -> Dict:
         """Process ranking for all questions that have correct answers"""
         try:
-            # Fetch all questions
+            logger.info("Starting ranking process for all questions")
+            
+            # Fetch all questions from API
             questions = self.db.fetch_all_questions()
             
             if not questions:
+                logger.warning("No questions found in API")
                 return {
                     "total_questions": 0,
                     "processed_count": 0,
@@ -76,6 +91,8 @@ class RankingService:
                     "answers_scored": 0
                 }
             
+            logger.info(f"Found {len(questions)} questions to process")
+            
             processed_questions = []
             total_answers_ranked = 0
             total_answers_scored = 0
@@ -84,6 +101,8 @@ class RankingService:
             
             # Process each question
             for question in questions:
+                question_id = question.get('_id', 'UNKNOWN')
+                
                 if question.get('answers'):
                     # Check if question has admin-approved answers
                     has_correct = any(a.get('isCorrect', False) for a in question['answers'])
@@ -94,13 +113,24 @@ class RankingService:
                         total_answers_ranked += answers_ranked
                         total_answers_scored += answers_scored
                         processed_count += 1
+                        logger.debug(f"✅ Processed question {question_id}")
                     else:
                         skipped_count += 1
+                        logger.debug(f"⏭️ Skipped question {question_id} - no correct answers")
                 else:
                     skipped_count += 1
+                    logger.debug(f"⏭️ Skipped question {question_id} - no answers")
             
-            # Update database
-            update_result = self.db.bulk_update_questions(processed_questions)
+            logger.info(f"Processing complete: {processed_count} processed, {skipped_count} skipped")
+            logger.info(f"Total answers ranked: {total_answers_ranked}, scored: {total_answers_scored}")
+            
+            # Update API with processed questions
+            if processed_questions:
+                logger.info(f"Updating {len(processed_questions)} questions in API")
+                update_result = self.db.bulk_update_questions(processed_questions)
+            else:
+                logger.warning("No questions to update")
+                update_result = {"updated_count": 0, "failed_count": 0}
             
             return {
                 "total_questions": len(questions),

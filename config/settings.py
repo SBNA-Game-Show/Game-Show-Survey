@@ -4,10 +4,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Config:
-    # Database Configuration
-    MONGO_CONNECTION_STRING = os.getenv('MONGO_CONNECTION_STRING')
-    DB_NAME = os.getenv('DB_NAME', 'database_Test_Ninja2')
-    COLLECTION_NAME = os.getenv('COLLECTION_NAME', 'questions')
+    # API Configuration - All from environment variables
+    API_BASE_URL = os.getenv('API_BASE_URL')
+    API_KEY = os.getenv('API_KEY')
+    API_ENDPOINT = os.getenv('API_ENDPOINT')
     
     # Processing Configuration
     SIMILARITY_THRESHOLD = float(os.getenv('SIMILARITY_THRESHOLD', '0.75'))
@@ -15,13 +15,23 @@ class Config:
     
     # Application Configuration
     LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
+    FLASK_PORT = int(os.getenv('FLASK_PORT', '5000'))
+    FLASK_DEBUG = os.getenv('FLASK_DEBUG', 'False').lower() == 'true'
     
     @classmethod
     def validate(cls):
         """Validate required configuration"""
-        if not cls.MONGO_CONNECTION_STRING:
-            raise ValueError("MONGO_CONNECTION_STRING is required")
-        if not cls.DB_NAME:
-            raise ValueError("DB_NAME is required")
-        if not cls.COLLECTION_NAME:
-            raise ValueError("COLLECTION_NAME is required")
+        required_vars = ['API_BASE_URL', 'API_KEY', 'API_ENDPOINT']
+        missing_vars = []
+        
+        for var in required_vars:
+            if not getattr(cls, var):
+                missing_vars.append(var)
+        
+        if missing_vars:
+            raise ValueError(f"Missing required environment variables: {', '.join(missing_vars)}")
+    
+    @classmethod
+    def get_full_api_url(cls):
+        """Get the complete API URL"""
+        return f"{cls.API_BASE_URL}{cls.API_ENDPOINT}"

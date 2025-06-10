@@ -1,30 +1,139 @@
+"""
+Refactored Flask Application - Clean and modular
+"""
+
+import time
+import traceback
 from flask import Flask, render_template_string, jsonify, request
 from config.settings import Config
 from database.db_handler import DatabaseHandler
 from services.ranking_service import RankingService
 from utils.logger import setup_logger
-import time
-import traceback
+from constants import LogMessages
 
+# Initialize Flask app
 app = Flask(__name__)
 
 # Setup logging
 logger = setup_logger()
 
-# Validate configuration
-try:
-    Config.validate()
-    logger.info("✅ Configuration validated for debug UI")
-except Exception as e:
-    logger.error(f"❌ Configuration error: {e}")
-    raise
 
-# Initialize services
-db_handler = DatabaseHandler()
-ranking_service = RankingService(db_handler)
+class AppInitializer:
+    """Handles application initialization"""
+    
+    @staticmethod
+    def initialize() -> tuple:
+        """Initialize and validate application components"""
+        try:
+            # Validate configuration
+            Config.validate()
+            logger.info("✅ Configuration validated for debug UI")
+            
+            # Initialize services
+            db_handler = DatabaseHandler()
+            ranking_service = RankingService(db_handler)
+            
+            return db_handler, ranking_service
+            
+        except Exception as e:
+            logger.error(f"❌ Configuration error: {e}")
+            raise
 
-# HTML Template for Debug UI
-DEBUG_UI_TEMPLATE = '''
+
+class APIEndpoints:
+    """Handles API endpoint logic"""
+    
+    def __init__(self, db_handler: DatabaseHandler, ranking_service: RankingService):
+        self.db_handler = db_handler
+        self.ranking_service = ranking_service
+    
+    def health_check(self) -> dict:
+        """Health check endpoint logic"""
+        try:
+            is_healthy = self.db_handler.test_connection()
+            return {
+                "status": "success" if is_healthy else "error",
+                "api_url": Config.get_full_api_url(),
+                "timestamp": time.time()
+            }
+        except Exception as e:
+            return {"status": "error", "error": str(e)}
+    
+    def test_connection(self) -> dict:
+        """Test API connection logic"""
+        try:
+            start_time = time.time()
+            is_healthy = self.db_handler.test_connection()
+            test_time = round(time.time() - start_time, 2)
+            
+            return {
+                "status": "success" if is_healthy else "error",
+                "results": {
+                    "connection": "healthy" if is_healthy else "failed",
+                    "test_time": f"{test_time}s",
+                    "api_url": Config.get_full_api_url()
+                }
+            }
+        except Exception as e:
+            return {"status": "error", "error": str(e)}
+    
+    def get_questions(self) -> dict:
+        """Fetch questions logic"""
+        try:
+            start_time = time.time()
+            questions = self.db_handler.fetch_all_questions()
+            fetch_time = round(time.time() - start_time, 2)
+            
+            # Analyze questions
+            questions_with_answers = sum(1 for q in questions if q.get('answers'))
+            admin_approved = sum(1 for q in questions 
+                               if any(a.get('isCorrect') is not None for a in q.get('answers', [])))
+            
+            return {
+                "status": "success",
+                "results": {
+                    "total_questions": len(questions),
+                    "questions_with_answers": questions_with_answers,
+                    "admin_approved": admin_approved,
+                    "processing_time": f"{fetch_time}s"
+                }
+            }
+        except Exception as e:
+            return {"status": "error", "error": str(e)}
+    
+    def process_ranking(self) -> dict:
+        """Process ranking logic"""
+        try:
+            start_time = time.time()
+            result = self.ranking_service.process_all_questions()
+            processing_time = round(time.time() - start_time, 2)
+            
+            return {
+                "status": "success",
+                "results": {
+                    "total_questions": result["total_questions"],
+                    "processed_count": result["processed_count"],
+                    "skipped_count": result["skipped_count"],
+                    "updated_count": result["updated_count"],
+                    "failed_count": result["failed_count"],
+                    "answers_ranked": result["answers_ranked"],
+                    "answers_scored": result["answers_scored"],
+                    "processing_time": f"{processing_time}s"
+                }
+            }
+        except Exception as e:
+            logger.error(f"Ranking process failed: {str(e)}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            return {"status": "error", "error": str(e)}
+
+
+class TemplateProvider:
+    """Provides HTML templates for the debug UI"""
+    
+    @staticmethod
+    def get_debug_ui_template() -> str:
+        """Get the main debug UI template"""
+        return '''
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -355,92 +464,44 @@ DEBUG_UI_TEMPLATE = '''
 </html>
 '''
 
+
+# Initialize application components
+db_handler, ranking_service = AppInitializer.initialize()
+api_endpoints = APIEndpoints(db_handler, ranking_service)
+
+# Route handlers
 @app.route('/')
 def debug_ui():
     """Debug UI homepage"""
-    return render_template_string(DEBUG_UI_TEMPLATE, config=Config)
+    return render_template_string(TemplateProvider.get_debug_ui_template(), config=Config)
 
 @app.route('/api/health')
 def health():
     """Health check endpoint"""
-    try:
-        is_healthy = db_handler.test_connection()
-        return jsonify({
-            "status": "success" if is_healthy else "error",
-            "api_url": Config.get_full_api_url(),
-            "timestamp": time.time()
-        })
-    except Exception as e:
-        return jsonify({"status": "error", "error": str(e)}), 500
+    result = api_endpoints.health_check()
+    status_code = 500 if result["status"] == "error" else 200
+    return jsonify(result), status_code
 
 @app.route('/api/test-connection')
 def test_connection():
     """Test API connection"""
-    try:
-        start_time = time.time()
-        is_healthy = db_handler.test_connection()
-        test_time = round(time.time() - start_time, 2)
-        
-        return jsonify({
-            "status": "success" if is_healthy else "error",
-            "results": {
-                "connection": "healthy" if is_healthy else "failed",
-                "test_time": f"{test_time}s",
-                "api_url": Config.get_full_api_url()
-            }
-        })
-    except Exception as e:
-        return jsonify({"status": "error", "error": str(e)}), 500
+    result = api_endpoints.test_connection()
+    status_code = 500 if result["status"] == "error" else 200
+    return jsonify(result), status_code
 
 @app.route('/api/get-questions')
 def get_questions():
     """Fetch questions from API"""
-    try:
-        start_time = time.time()
-        questions = db_handler.fetch_all_questions()
-        fetch_time = round(time.time() - start_time, 2)
-        
-        # Analyze questions
-        questions_with_answers = sum(1 for q in questions if q.get('answers'))
-        admin_approved = sum(1 for q in questions if any(a.get('isCorrect') is not None for a in q.get('answers', [])))
-        
-        return jsonify({
-            "status": "success",
-            "results": {
-                "total_questions": len(questions),
-                "questions_with_answers": questions_with_answers,
-                "admin_approved": admin_approved,
-                "processing_time": f"{fetch_time}s"
-            }
-        })
-    except Exception as e:
-        return jsonify({"status": "error", "error": str(e)}), 500
+    result = api_endpoints.get_questions()
+    status_code = 500 if result["status"] == "error" else 200
+    return jsonify(result), status_code
 
 @app.route('/api/process-ranking', methods=['POST'])
 def process_ranking():
     """Process ranking for all questions"""
-    try:
-        start_time = time.time()
-        result = ranking_service.process_all_questions()
-        processing_time = round(time.time() - start_time, 2)
-        
-        return jsonify({
-            "status": "success",
-            "results": {
-                "total_questions": result["total_questions"],
-                "processed_count": result["processed_count"],
-                "skipped_count": result["skipped_count"],
-                "updated_count": result["updated_count"],
-                "failed_count": result["failed_count"],
-                "answers_ranked": result["answers_ranked"],
-                "answers_scored": result["answers_scored"],
-                "processing_time": f"{processing_time}s"
-            }
-        })
-    except Exception as e:
-        logger.error(f"Ranking process failed: {str(e)}")
-        logger.error(f"Traceback: {traceback.format_exc()}")
-        return jsonify({"status": "error", "error": str(e)}), 500
+    result = api_endpoints.process_ranking()
+    status_code = 500 if result["status"] == "error" else 200
+    return jsonify(result), status_code
 
 @app.route('/api/logs')
 def get_logs():

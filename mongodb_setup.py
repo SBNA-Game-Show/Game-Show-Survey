@@ -7,7 +7,7 @@ from bson import ObjectId
 
 # MongoDB Configuration
 MONGO_CONNECTION_STRING = "mongodb+srv://SBNAadmin:8PYSMXyZ%40zp4uwF@cluster1-production.v4anhjy.mongodb.net"
-DB_NAME = "database_Test_Ninja2"
+DB_NAME = "Ninja_Demo"
 COLLECTION_NAME = "questions"
 
 class MongoDBHandler:

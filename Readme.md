@@ -218,25 +218,6 @@ survey-ranking-system/
 
 ## 📝 Data Format
 
-The system expects questions with this structure:
-```json
-{
-  "_id": "question_id",
-  "question": "What is the capital of France?",
-  "answers": [
-    {
-      "answer": "Paris",
-      "isCorrect": true,
-      "responseCount": 150
-    },
-    {
-      "answer": "London", 
-      "isCorrect": false,
-      "responseCount": 25
-    }
-  ]
-}
-```
 
 After processing, answers get ranked and scored:
 ```json

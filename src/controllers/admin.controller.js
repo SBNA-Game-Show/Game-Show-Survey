@@ -28,24 +28,38 @@ const addAdmin = asyncHandler(async (req, res) => {
 
     // add the new administrator to the database if it doesn't already exist
     if (!alreadyExists) {
-        // Hash password
-        const salt = await bcrypt.genSalt(10)
-        const hashedPassword = await bcrypt.hash(password, salt)
-
+        
         const admin = await Admin.create({
             userName,
-            password: hashedPassword,
+            password,
             role,           
         })
-        // 🧠 send a success response, include token in response
+
+        //fetch the Admin
+        //the .selec means it should exclude the password and refreshToken
+
+        const createdAdmin = await Admin.findById(admin._id)
+        // .select(
+        // "-password -refreshToken"
+        // )
+
+        if (!createdAdmin) {
+        throw new ApiError(500, "Something went wrong while registering the user")
+        }
+
         return res.status(201).json(
-            new ApiResponse(201, {
-             _id: admin._id,
-            userName: admin.userName,
-            password: admin.password,
-            role: admin.role,
-            token: generateToken(admin._id),
-            }, 'New admin created successfully'));
+        new ApiResponse(200, createdAdmin, "New Admin created successfully")
+    );
+    
+        // // 🧠 send a success response, include token in response
+        // return res.status(201).json(
+        //     new ApiResponse(201, {
+        //      _id: admin._id,
+        //     userName: admin.userName,
+        //     password: admin.password,
+        //     role: admin.role,
+        //     token: generateToken(admin._id),
+        //     }, 'New admin created successfully'));
 
 
         // send a success response
@@ -153,29 +167,183 @@ const getAdmin = asyncHandler(async (req, res) => {
 // @desc    Authenticate an admin
 // @route   POST /api/admin/login
 // @access  Private
-const loginAdmin = asyncHandler(async (req, res) => {
-  const { userName, password } = req.body
+// const loginAdmin = asyncHandler(async (req, res) => {
+//   const { userName, password } = req.body
 
-  // Check for admin userName
-  const admin = await Admin.findOne({ userName })
+//   // Check for admin userName
+//   const admin = await Admin.findOne({ userName })
 
-  if (admin && (await bcrypt.compare(password, admin.password))) {
-    res.json({
-      _id: admin.id,
-      userName: admin.userName,
-      token: generateToken(admin._id),
+//   if (admin && (await bcrypt.compare(password, admin.password))) {
+//     res.json({
+//       _id: admin.id,
+//       userName: admin.userName,
+//       refreh
+//     })
+//   } else {
+//     res.status(400)
+//     throw new Error('Invalid credentials')
+//   }
+// })
+
+// req body -> data
+// userName or password
+//find the admin
+//password check
+//access and referesh token
+//send cookie
+
+const loginAdmin = asyncHandler(async (req, res) =>{
+
+    // check if admin
+    if (!req.isAdminRoute) {
+        throw new ApiError(403, "You need Admin Privileges");
+    }
+
+    const {userName, password} = req.body
+
+    if (!userName && !password) {
+        throw new ApiError(400, "userName password is required")
+    }
+
+    const admin = await Admin.findOne({
+        $or: [{userName}, {password}]
     })
-  } else {
-    res.status(400)
-    throw new Error('Invalid credentials')
-  }
+
+    if (!admin) {
+        throw new ApiError(404, "Admin does not exist")
+    }
+
+   const isPasswordValid = await admin.isPasswordCorrect(password)
+
+   if (!isPasswordValid) {
+    throw new ApiError(401, "Invalid admin credentials")
+    }
+
+   const {accessToken, refreshToken} = await generateAccessAndRefereshTokens(admin._id)
+
+    const loggedInAdmin = await Admin.findById(admin._id).select("-password -refreshToken")
+
+    const options = {
+        httpOnly: true,
+        secure: true
+    }
+
+    return res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(
+        new ApiResponse(
+            200, 
+            {
+                admin: loggedInAdmin, accessToken, refreshToken
+            },
+            "Admin logged In Successfully"
+        )
+    )
+
 })
 
-// Generate JWT
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: '30d',
-  })
+const logoutAdmin = asyncHandler(async(req, res) => {
+
+    // check if admin
+    if (!req.isAdminRoute) {
+        throw new ApiError(403, "You need Admin Privileges");
+    }
+
+    await Admin.findByIdAndUpdate(
+        req.admin._id,
+        {
+            $unset: {
+                refreshToken: 1 // this removes the field from document
+            }
+        },
+        {
+            new: true
+        }
+    )
+
+    const options = {
+        httpOnly: true,
+        secure: true
+    }
+
+    return res
+    .status(200)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json(new ApiResponse(200, {}, "Admin logged Out"))
+})
+
+const generateAccessAndRefereshTokens = async(_id) =>{
+    try {
+        const admin = await Admin.findById(_id)
+        const accessToken = admin.generateAccessToken()
+        const refreshToken = admin.generateRefreshToken()
+
+        admin.refreshToken = refreshToken
+        await admin.save({ validateBeforeSave: false })
+
+        return {accessToken, refreshToken}
+
+
+    } catch (error) {
+        throw new ApiError(500, "Something went wrong while generating referesh and access token")
+    }
 }
 
-export { addAdmin, updateAdmin, deleteAdmin, getAdmin, loginAdmin };
+const refreshAccessToken = asyncHandler(async (req, res) => {
+    const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken
+
+    if (!incomingRefreshToken) {
+        throw new ApiError(401, "unauthorized request")
+    }
+
+    try {
+        const decodedToken = jwt.verify(
+            incomingRefreshToken,
+            process.env.REFRESH_TOKEN_SECRET
+        )
+    
+        const admin = await Admin.findById(decodedToken?._id)
+    
+        if (!admin) {
+            throw new ApiError(401, "Invalid refresh token")
+        }
+    
+        if (incomingRefreshToken !== admin?.refreshToken) {
+            throw new ApiError(401, "Refresh token is expired or used")
+            
+        }
+    
+        const options = {
+            httpOnly: true,
+            secure: true
+        }
+    
+        const {accessToken, newRefreshToken} = await generateAccessAndRefereshTokens(admin._id)
+    
+        return res
+        .status(200)
+        .cookie("accessToken", accessToken, options)
+        .cookie("refreshToken", newRefreshToken, options)
+        .json(
+            new ApiResponse(
+                200, 
+                {accessToken, refreshToken: newRefreshToken},
+                "Access token refreshed"
+            )
+        )
+    } catch (error) {
+        throw new ApiError(401, error?.message || "Invalid refresh token")
+    }
+
+})
+
+
+
+
+
+
+
+export { addAdmin, updateAdmin, deleteAdmin, getAdmin, loginAdmin, logoutAdmin, refreshAccessToken };

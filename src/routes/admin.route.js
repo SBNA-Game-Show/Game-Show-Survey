@@ -16,11 +16,13 @@ import {
     updateAdmin, 
     deleteAdmin, 
     getAdmin,
-    loginAdmin
+    loginAdmin,
+    logoutAdmin,
+    refreshAccessToken
 } from "../controllers/admin.controller.js";
 import { checkApiKey } from "../middlewares/apiKey.js";
 import checkIfAdminRoute from "../middlewares/isAdmin.js";
-import {protect } from "../middlewares/authMiddleware.js";  
+import { verifyJWT } from "../middlewares/authMiddleware.js";  
 
 // routes handled under: api/v1/admin
 // for admin-level CRUD operations
@@ -29,21 +31,27 @@ const adminRouter = Router();
 // [ POST ] METHOD for login an administrator
 adminRouter.route("/login").post(checkApiKey, checkIfAdminRoute, loginAdmin);
 
+// [ POST ] METHOD for logout an administrator
+adminRouter.route("/logout").post(checkApiKey, checkIfAdminRoute, verifyJWT, logoutAdmin);
+
+// [ POST ] METHOD for refresh-token
+adminRouter.route("/refresh-token").post(checkApiKey, checkIfAdminRoute, refreshAccessToken);
+
 // [ POST ] METHOD to add questions to DB alongside API-KEY check middleware
 adminRouter.route("/survey")
-  .post(checkApiKey, checkIfAdminRoute, protect, addQuestions);
+  .post(checkApiKey, checkIfAdminRoute, verifyJWT, addQuestions);
 
 // [ GET ] METHOD will get all the Questions and Answers for ADMIN
 adminRouter.route("/survey")
-  .get(checkApiKey, checkIfAdminRoute, protect, getQuestion);
+  .get(checkApiKey, checkIfAdminRoute, verifyJWT, getQuestion);
 
 // [ PUT ] METHOD to retrieve one question by ID. Returns all question fields
 adminRouter.route("/survey")
-  .put(checkApiKey, checkIfAdminRoute, protect, updateQuestionById);
+  .put(checkApiKey, checkIfAdminRoute, verifyJWT, updateQuestionById);
 
 // [ DELETE ] METHOD to delete a question by its ID.
 adminRouter.route("/survey")
-  .delete(checkApiKey, checkIfAdminRoute, protect, deleteQuestionById);
+  .delete(checkApiKey, checkIfAdminRoute, verifyJWT, deleteQuestionById);
 
 /////////////////////// ________________________ ///////////////////
 ////////////////////// |                       | ///////////////////
@@ -59,22 +67,22 @@ adminRouter.route("/survey")
 // [ POST ] METHOD to apply finalized questions and correct responses to finalQuestionSchema
 adminRouter
   .route("/survey/final")
-  .post(checkApiKey, checkIfAdminRoute, protect, addFinalQuestions);
+  .post(checkApiKey, checkIfAdminRoute, verifyJWT, addFinalQuestions);
 
 // [ PUT ] METHOD to make changes to a finalized question's fields in the DataBase by ID
 adminRouter
   .route("/survey/final")
-  .put(checkApiKey, checkIfAdminRoute, protect, updateFinalQuestionById);
+  .put(checkApiKey, checkIfAdminRoute, verifyJWT, updateFinalQuestionById);
 
 // [ GET ] METHOD to retrieve all questions and answers for admin, users will only see questions
 adminRouter
   .route("/survey/final")
-  .get(checkApiKey, checkIfAdminRoute, protect, getFinalQuestions);
+  .get(checkApiKey, checkIfAdminRoute, verifyJWT, getFinalQuestions);
 
 // [ DELETE ] METHOD to delete a question from the finalized DataBase
 adminRouter
   .route("/survey/final")
-  .delete(checkApiKey, checkIfAdminRoute, protect, deleteFinalQuestionById);
+  .delete(checkApiKey, checkIfAdminRoute, verifyJWT, deleteFinalQuestionById);
 
 
 // routes handled under: api/v1/admin/admins
@@ -84,7 +92,7 @@ adminRouter
 adminRouter.route("/superadmins").post(checkApiKey, checkIfAdminRoute, addAdmin);
 
 // [ GET ] METHOD for retrieving an administrator by username
-adminRouter.route("/superadmins").get(checkApiKey, checkIfAdminRoute, protect, getAdmin);
+adminRouter.route("/superadmins").get(checkApiKey, checkIfAdminRoute, verifyJWT, getAdmin);
 
 // [ PUT ] METHOD for updating an administator
 adminRouter.route("/superadmins").put(checkApiKey, checkIfAdminRoute, updateAdmin);

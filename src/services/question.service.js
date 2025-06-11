@@ -277,8 +277,8 @@ async function updateQuestionById(questionsData, collection) {
       // INPUT questions must have exactly one correct answer
       if (questionType === QUESTION_TYPE.INPUT) {
         const correctAnswers = answers.filter((a) => a.isCorrect === true);
-        if (correctAnswers.length !== 5) {
-          throw new ApiError(400, "Must have 5 answers set to Correct");
+        if (correctAnswers.length !== 3) {
+          throw new ApiError(400, "Must have 3 answers set to Correct");
         }
       }
     }

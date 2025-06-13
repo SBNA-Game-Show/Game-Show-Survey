@@ -132,7 +132,7 @@ class TemplateProvider:
     
     @staticmethod
     def get_debug_ui_template() -> str:
-        """Get the main debug UI template"""
+        """Get the main debug UI template with updated design"""
         return '''
 <!DOCTYPE html>
 <html lang="en">
@@ -143,167 +143,316 @@ class TemplateProvider:
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
             min-height: 100vh;
-            padding: 20px;
         }
+
+        /* Header */
+        .header {
+            background: white;
+            padding: 16px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .logo-text h1 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 2px;
+        }
+
+        .logo-text p {
+            font-size: 14px;
+            color: #718096;
+        }
+
         .container { 
-            max-width: 1200px; 
+            max-width: 1400px; 
             margin: 0 auto; 
-            background: white; 
-            border-radius: 12px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            padding: 24px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             overflow: hidden;
         }
-        .header { 
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            color: white; 
-            padding: 30px; 
-            text-align: center; 
+
+        .panel-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            background: #f8fafc;
         }
-        .header h1 { font-size: 2.5em; margin-bottom: 10px; }
-        .header p { opacity: 0.9; font-size: 1.1em; }
-        .content { padding: 30px; }
+
+        .panel-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a202c;
+            margin-bottom: 8px;
+        }
+
+        .panel-subtitle {
+            font-size: 14px;
+            color: #718096;
+        }
+
         .section { 
-            background: #f8f9fa; 
-            border-radius: 8px; 
-            padding: 20px; 
-            margin-bottom: 20px;
-            border-left: 4px solid #4facfe;
+            padding: 24px;
         }
-        .section h2 { color: #333; margin-bottom: 15px; }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
         .btn { 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #4299e1;
             color: white; 
             border: none; 
-            padding: 12px 24px; 
+            padding: 10px 20px; 
             border-radius: 6px; 
             cursor: pointer; 
-            font-size: 16px;
-            margin: 5px;
-            transition: transform 0.2s;
+            font-size: 14px;
+            font-weight: 500;
+            margin: 6px 8px 6px 0;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
         }
-        .btn:hover { transform: translateY(-2px); }
+
+        .btn:hover { 
+            background: #3182ce;
+            transform: translateY(-1px);
+        }
+
         .btn:disabled { 
-            background: #ccc; 
+            background: #a0aec0; 
             cursor: not-allowed; 
             transform: none;
         }
+
+        .btn-success {
+            background: #48bb78;
+        }
+
+        .btn-success:hover {
+            background: #38a169;
+        }
+
+        .btn-warning {
+            background: #8b5cf6;
+        }
+
+        .btn-warning:hover {
+            background: #7c3aed;
+        }
+
+        .btn-danger {
+            background: #f56565;
+        }
+
+        .btn-danger:hover {
+            background: #e53e3e;
+        }
+
         .status { 
-            padding: 15px; 
-            border-radius: 6px; 
-            margin: 10px 0; 
-            font-weight: bold;
+            padding: 12px 16px; 
+            border-radius: 8px; 
+            margin: 12px 0; 
+            font-weight: 500;
+            font-size: 14px;
+            border-left: 4px solid;
         }
-        .status.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .status.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-        .status.info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
-        .status.warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
-        .config-grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
-            gap: 15px; 
-            margin: 20px 0;
+
+        .status.success { 
+            background: #f0fff4; 
+            color: #22543d; 
+            border-left-color: #48bb78;
         }
-        .config-item { 
-            background: white; 
-            padding: 15px; 
-            border-radius: 6px; 
-            border: 1px solid #ddd;
+
+        .status.error { 
+            background: #fff5f5; 
+            color: #742a2a; 
+            border-left-color: #f56565;
         }
-        .config-item strong { color: #667eea; }
-        .logs { 
-            background: #1e1e1e; 
-            color: #f8f8f2; 
-            padding: 20px; 
-            border-radius: 6px; 
-            font-family: 'Courier New', monospace; 
-            max-height: 400px; 
-            overflow-y: auto;
-            white-space: pre-wrap;
+
+        .status.info { 
+            background: #ebf8ff; 
+            color: #2a4365; 
+            border-left-color: #4299e1;
         }
+
+        .status.warning { 
+            background: #fffaf0; 
+            color: #744210; 
+            border-left-color: #ed8936;
+        }
+
         .progress { 
-            background: #e9ecef; 
-            border-radius: 10px; 
-            height: 20px; 
+            background: #e2e8f0; 
+            border-radius: 8px; 
+            height: 8px; 
             overflow: hidden;
-            margin: 10px 0;
+            margin: 12px 0;
         }
+
         .progress-bar { 
-            background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+            background: linear-gradient(90deg, #4299e1 0%, #667eea 100%);
             height: 100%; 
             width: 0%; 
-            transition: width 0.3s;
+            transition: width 0.3s ease;
         }
+
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin: 20px 0;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 16px;
+            margin: 16px 0;
         }
+
         .stat-card {
-            background: white;
-            padding: 20px;
+            background: #f7fafc;
+            padding: 16px;
             border-radius: 8px;
             text-align: center;
-            border: 1px solid #ddd;
+            border: 1px solid #e2e8f0;
         }
+
         .stat-number {
-            font-size: 2em;
-            font-weight: bold;
-            color: #667eea;
+            font-size: 24px;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 4px;
         }
+
         .stat-label {
-            color: #666;
-            margin-top: 5px;
+            color: #718096;
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .logs { 
+            background: #1a202c; 
+            color: #f7fafc; 
+            padding: 16px; 
+            border-radius: 8px; 
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace; 
+            max-height: 300px; 
+            overflow-y: auto;
+            white-space: pre-wrap;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .full-width-panel {
+            grid-column: 1 / -1;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .container {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 16px;
+            }
+            
+            .header {
+                padding: 12px 16px;
+            }
+            
+            .logo-text h1 {
+                font-size: 18px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🏆 Survey Ranking Debug UI</h1>
-            <p>Monitor and debug the ranking process</p>
+    <!-- Header -->
+    <div class="header">
+        <div class="logo">
+            <div class="logo-icon">🏆</div>
+            <div class="logo-text">
+                <h1>Survey Ranking</h1>
+                <p>Monitor ranking process</p>
+            </div>
         </div>
-        
-        <div class="content">
-            <!-- Configuration Section -->
+    </div>
+
+    <div class="container">
+        <!-- Actions Panel -->
+        <div class="panel">
+            <div class="panel-header">
+                <h2 class="panel-title">🎮 Actions</h2>
+                <p class="panel-subtitle">Control and test the ranking system</p>
+            </div>
+            
             <div class="section">
-                <h2>🔧 Configuration</h2>
-                <div class="config-grid">
-                    <div class="config-item">
-                        <strong>API Base URL:</strong><br>
-                        <span id="api-url">{{ config.API_BASE_URL }}</span>
-                    </div>
-                    <div class="config-item">
-                        <strong>API Endpoint:</strong><br>
-                        <span>{{ config.API_ENDPOINT }}</span>
-                    </div>
-                    <div class="config-item">
-                        <strong>API Key:</strong><br>
-                        <span>{{ config.API_KEY[:8] }}...</span>
-                    </div>
-                    <div class="config-item">
-                        <strong>Log Level:</strong><br>
-                        <span>{{ config.LOG_LEVEL }}</span>
-                    </div>
+                <div class="button-group">
+                    <button class="btn btn-warning" onclick="runFullProcess()">🏆 Rank</button>
                 </div>
             </div>
+        </div>
 
-            <!-- Actions Section -->
-            <div class="section">
-                <h2>🎮 Actions</h2>
-                <button class="btn" onclick="testConnection()">🔍 Test API Connection</button>
-                <button class="btn" onclick="fetchQuestions()">📥 Fetch Questions</button>
-                <button class="btn" onclick="processRanking()">🏆 Process Ranking</button>
-                <button class="btn" onclick="runFullProcess()">🚀 Run Full Process</button>
-                <button class="btn" onclick="clearLogs()">🗑️ Clear Logs</button>
+        <!-- Status Panel -->
+        <div class="panel">
+            <div class="panel-header">
+                <h2 class="panel-title">📊 Status</h2>
+                <p class="panel-subtitle">Current system status and progress</p>
             </div>
-
-            <!-- Status Section -->
+            
             <div class="section">
-                <h2>📊 Status</h2>
                 <div id="status-container">
                     <div class="status info">Ready to start</div>
                 </div>
@@ -311,10 +460,16 @@ class TemplateProvider:
                     <div class="progress-bar" id="progress-bar"></div>
                 </div>
             </div>
+        </div>
 
-            <!-- Statistics Section -->
+        <!-- Statistics Panel -->
+        <div class="panel full-width-panel">
+            <div class="panel-header">
+                <h2 class="panel-title">📈 Statistics</h2>
+                <p class="panel-subtitle">Performance metrics and results</p>
+            </div>
+            
             <div class="section">
-                <h2>📈 Statistics</h2>
                 <div class="stats-grid" id="stats-grid">
                     <div class="stat-card">
                         <div class="stat-number" id="total-questions">-</div>
@@ -332,12 +487,22 @@ class TemplateProvider:
                         <div class="stat-number" id="processing-time">-</div>
                         <div class="stat-label">Processing Time</div>
                     </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="final-submitted">-</div>
+                        <div class="stat-label">Final Submitted</div>
+                    </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Logs Section -->
+        <!-- Logs Panel -->
+        <div class="panel full-width-panel">
+            <div class="panel-header">
+                <h2 class="panel-title">📝 System Logs</h2>
+                <p class="panel-subtitle">Real-time operation logs and debugging information</p>
+            </div>
+            
             <div class="section">
-                <h2>📝 Logs</h2>
                 <div class="logs" id="logs">
 [INFO] Debug UI initialized
 [INFO] Waiting for user action...
@@ -375,6 +540,9 @@ class TemplateProvider:
             }
             if (stats.processing_time !== undefined) {
                 document.getElementById('processing-time').textContent = stats.processing_time;
+            }
+            if (stats.final_submitted_count !== undefined) {
+                document.getElementById('final-submitted').textContent = stats.final_submitted_count;
             }
         }
 
@@ -424,8 +592,8 @@ class TemplateProvider:
         }
 
         async function runFullProcess() {
-            addLog('Starting full ranking process...');
-            updateStatus('🚀 Running full process...', 'info');
+            addLog('Starting ranking process...');
+            updateStatus('🏆 Processing rankings...', 'info');
             
             try {
                 await testConnection();
@@ -436,11 +604,11 @@ class TemplateProvider:
                 
                 await processRanking();
                 
-                updateStatus('🎉 Full process completed!', 'success');
-                addLog('Full process completed successfully!');
+                updateStatus('🎉 Ranking completed!', 'success');
+                addLog('Ranking process completed successfully!');
             } catch (error) {
-                updateStatus('❌ Full process failed', 'error');
-                addLog('Full process failed', 'ERROR');
+                updateStatus('❌ Ranking failed', 'error');
+                addLog('Ranking process failed', 'ERROR');
             }
         }
 
@@ -454,7 +622,7 @@ class TemplateProvider:
         setInterval(async () => {
             try {
                 await fetch('/api/health');
-                addLog('Health check: OK');
+                // Only log if debug logging is enabled
             } catch (error) {
                 addLog('Health check: Failed', 'WARNING');
             }
@@ -473,7 +641,7 @@ api_endpoints = APIEndpoints(db_handler, ranking_service)
 @app.route('/')
 def debug_ui():
     """Debug UI homepage"""
-    return render_template_string(TemplateProvider.get_debug_ui_template(), config=Config)
+    return render_template_string(TemplateProvider.get_debug_ui_template())
 
 @app.route('/api/health')
 def health():

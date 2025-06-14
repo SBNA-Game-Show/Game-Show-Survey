@@ -36,6 +36,14 @@ class ProcessorDisplay:
         print(f"❌ Failed Updates: {result['failed_count']}")
         print(f"🏆 Answers Ranked: {result['answers_ranked']}")
         print(f"🎯 Answers Scored: {result['answers_scored']}")
+        print(f"\n🎯 FINAL ENDPOINT SYNC:")
+        print(f"📤 Final Submitted: {result['final_submitted_count']}")
+        print(f"🆕 New Questions: {result['new_questions_count']}")
+        print(f"📝 Updated Questions: {result['updated_questions_count']}")
+        print(f"✅ Unchanged Questions: {result['unchanged_questions_count']}")
+        print(f"⚠️ Invalid Questions: {result['invalid_questions_count']}")
+        if result['final_failed_count'] > 0:
+            print(f"❌ Final Failed: {result['final_failed_count']}")
         
         ProcessorDisplay._print_warnings_and_success(result)
         
@@ -52,6 +60,14 @@ class ProcessorDisplay:
             print(f"\n🎉 Success! {result['updated_count']} questions updated with rankings")
         else:
             print(f"\n ℹ️ No questions were updated (possibly no correct answers found)")
+        
+        # Final endpoint success messages
+        if result.get('final_submitted_count', 0) > 0:
+            print(f"🌟 Final endpoint: {result['final_submitted_count']} questions synchronized!")
+        elif result.get('invalid_questions_count', 0) > 0:
+            print(f"ℹ️ Final endpoint: {result['invalid_questions_count']} questions skipped (validation issues)")
+        else:
+            print(f"ℹ️ Final endpoint: No synchronization needed")
     
     @staticmethod
     def print_error(error_msg: str):

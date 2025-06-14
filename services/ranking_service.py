@@ -139,7 +139,13 @@ class RankingService:
         self.db = db_handler
         self.answer_ranker = AnswerRanker(Config.SCORING_VALUES)
         self.question_processor = QuestionProcessor(self.answer_ranker)
+        
+        # Import FinalService here to avoid circular imports
+        from services.final_service import FinalService
+        self.final_service = FinalService(db_handler)
+        
         logger.info(f"RankingService initialized with scoring values: {Config.SCORING_VALUES}")
+        logger.info("✅ Final endpoint service initialized")
     
     def rank_and_score_answers(self, answers: List[Dict]) -> Tuple[List[Dict], int, int]:
         """Rank all correct answers by responseCount, keep incorrect answers unranked"""
@@ -167,7 +173,10 @@ class RankingService:
             processing_result = self._process_questions_batch(questions)
             update_result = self._update_processed_questions(processing_result['processed_questions'])
             
-            return self._combine_results(processing_result, update_result, len(questions))
+            # NEW: Process final endpoint synchronization after successful main endpoint update
+            final_result = self._process_final_endpoint_sync(processing_result['processed_questions'], update_result)
+            
+            return self._combine_results(processing_result, update_result, final_result, len(questions))
             
         except Exception as e:
             logger.error(LogMessages.PROCESSING_FAILED.format(error=str(e)))
@@ -192,7 +201,9 @@ class RankingService:
             "updated_count": 0,
             "failed_count": 0,
             "answers_ranked": 0,
-            "answers_scored": 0
+            "answers_scored": 0,
+            "final_submitted_count": 0,
+            "final_failed_count": 0
         }
     
     def _process_questions_batch(self, questions: List[Dict]) -> Dict:
@@ -291,8 +302,46 @@ class RankingService:
         }
         logger.debug(json.dumps(sample_structure, indent=2))
     
-    def _combine_results(self, processing_result: Dict, update_result: Dict, total_questions: int) -> Dict:
-        """Combine processing and update results"""
+    def _process_final_endpoint_sync(self, processed_questions: List[Dict], update_result: Dict) -> Dict:
+        """Process final endpoint synchronization after main endpoint update"""
+        # Only proceed if main endpoint update was successful
+        if update_result.get("updated_count", 0) == 0:
+            logger.info("⏭️ Skipping final endpoint sync - no questions updated in main endpoint")
+            return {
+                'final_submitted_count': 0,
+                'final_failed_count': 0,
+                'new_questions_count': 0,
+                'updated_questions_count': 0,
+                'unchanged_questions_count': 0,
+                'invalid_questions_count': 0
+            }
+        
+        try:
+            logger.info("🎯 Starting final endpoint synchronization...")
+            
+            # Fetch fresh data from main endpoint to ensure we have the latest
+            main_questions = self.db.fetch_all_questions()
+            
+            # Process final endpoint sync
+            final_result = self.final_service.process_final_endpoint_sync(main_questions)
+            
+            logger.info("✅ Final endpoint synchronization completed")
+            return final_result
+            
+        except Exception as e:
+            logger.error(f"❌ Final endpoint synchronization failed: {str(e)}")
+            # Return failed result but don't raise exception to not break main workflow
+            return {
+                'final_submitted_count': 0,
+                'final_failed_count': len(processed_questions),
+                'new_questions_count': 0,
+                'updated_questions_count': 0,
+                'unchanged_questions_count': 0,
+                'invalid_questions_count': 0
+            }
+    
+    def _combine_results(self, processing_result: Dict, update_result: Dict, final_result: Dict, total_questions: int) -> Dict:
+        """Combine processing, update, and final results"""
         return {
             "total_questions": total_questions,
             "processed_count": processing_result['processed_count'],
@@ -301,5 +350,12 @@ class RankingService:
             "failed_count": update_result["failed_count"],
             "answers_ranked": processing_result['total_answers_ranked'],
             "answers_scored": processing_result['total_answers_scored'],
-            "validation_failed": processing_result['validation_failed']
+            "validation_failed": processing_result['validation_failed'],
+            # Final endpoint results
+            "final_submitted_count": final_result.get('final_submitted_count', 0),
+            "final_failed_count": final_result.get('final_failed_count', 0),
+            "new_questions_count": final_result.get('new_questions_count', 0),
+            "updated_questions_count": final_result.get('updated_questions_count', 0),
+            "unchanged_questions_count": final_result.get('unchanged_questions_count', 0),
+            "invalid_questions_count": final_result.get('invalid_questions_count', 0)
         }

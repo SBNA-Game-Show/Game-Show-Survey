@@ -118,7 +118,8 @@ class APIEndpoints:
                     "failed_count": result["failed_count"],
                     "answers_ranked": result["answers_ranked"],
                     "answers_scored": result["answers_scored"],
-                    "processing_time": f"{processing_time}s"
+                    "processing_time": f"{processing_time}s",
+                    "final_submitted_count": result.get("final_submitted_count", 0)
                 }
             }
         except Exception as e:

@@ -252,6 +252,7 @@ class APIHandler:
             
         elif status_code == HTTPStatus.BAD_REQUEST:
             logger.error("❌ Bad request - check data format")
+            logger.error(f"Response content preview: {response_text[:200]}...")
             raise APIException(f"Bad request: {response_text[:100]}")
             
         elif status_code == HTTPStatus.INTERNAL_SERVER_ERROR:
@@ -259,6 +260,7 @@ class APIHandler:
             raise APIException("Server error")
         else:
             logger.error(f"❌ HTTP {status_code} error")
+            logger.error(f"Response content preview: {response_text[:200]}...")
             raise APIException(f"HTTP {status_code} error")
     
     def _log_request_details(self, method: str, data: Optional[Dict] = None) -> None:
@@ -297,6 +299,8 @@ class APIHandler:
                 return requests.get(self.url, headers=self.headers, timeout=self.timeout)
             elif method.upper() == "PUT":
                 return requests.put(self.url, headers=self.headers, json=data, timeout=self.timeout)
+            elif method.upper() == "POST":
+                return requests.post(self.url, headers=self.headers, json=data, timeout=self.timeout)
             else:
                 raise ValueError(f"Unsupported HTTP method: {method}")
         

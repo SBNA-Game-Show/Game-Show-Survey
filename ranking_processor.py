@@ -181,7 +181,7 @@ class RankingProcessor:
 
 
 def main() -> bool:
-    """Main function - entry point for the ranking processor"""
+    """Main function,entry point for the ranking processor"""
     processor = RankingProcessor()
     return processor.run()
 

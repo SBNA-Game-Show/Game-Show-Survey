@@ -1,5 +1,5 @@
 """
-Refactored Flask Application - Clean and modular
+Updated Flask Application - Two separate buttons for ranking and final POST
 """
 
 import time
@@ -8,6 +8,7 @@ from flask import Flask, render_template_string, jsonify, request
 from config.settings import Config
 from database.db_handler import DatabaseHandler
 from services.ranking_service import RankingService
+from services.final_service import FinalService
 from utils.logger import setup_logger
 from constants import LogMessages
 
@@ -32,8 +33,9 @@ class AppInitializer:
             # Initialize services
             db_handler = DatabaseHandler()
             ranking_service = RankingService(db_handler)
+            final_service = FinalService(db_handler)
             
-            return db_handler, ranking_service
+            return db_handler, ranking_service, final_service
             
         except Exception as e:
             logger.error(f"❌ Configuration error: {e}")
@@ -43,9 +45,10 @@ class AppInitializer:
 class APIEndpoints:
     """Handles API endpoint logic"""
     
-    def __init__(self, db_handler: DatabaseHandler, ranking_service: RankingService):
+    def __init__(self, db_handler: DatabaseHandler, ranking_service: RankingService, final_service: FinalService):
         self.db_handler = db_handler
         self.ranking_service = ranking_service
+        self.final_service = final_service
     
     def health_check(self) -> dict:
         """Health check endpoint logic"""
@@ -86,15 +89,16 @@ class APIEndpoints:
             
             # Analyze questions
             questions_with_answers = sum(1 for q in questions if q.get('answers'))
-            admin_approved = sum(1 for q in questions 
-                               if any(a.get('isCorrect') is not None for a in q.get('answers', [])))
+            input_questions = sum(1 for q in questions if q.get('questionType', '').lower() == 'input')
+            mcq_questions = sum(1 for q in questions if q.get('questionType', '').lower() == 'mcq')
             
             return {
                 "status": "success",
                 "results": {
                     "total_questions": len(questions),
                     "questions_with_answers": questions_with_answers,
-                    "admin_approved": admin_approved,
+                    "input_questions": input_questions,
+                    "mcq_questions": mcq_questions,
                     "processing_time": f"{fetch_time}s"
                 }
             }
@@ -102,7 +106,7 @@ class APIEndpoints:
             return {"status": "error", "error": str(e)}
     
     def process_ranking(self) -> dict:
-        """Process ranking logic"""
+        """Process ranking logic - Input questions only"""
         try:
             start_time = time.time()
             result = self.ranking_service.process_all_questions()
@@ -114,16 +118,60 @@ class APIEndpoints:
                     "total_questions": result["total_questions"],
                     "processed_count": result["processed_count"],
                     "skipped_count": result["skipped_count"],
+                    "skipped_mcq": result["skipped_mcq"],
+                    "skipped_insufficient": result["skipped_insufficient"],
                     "updated_count": result["updated_count"],
                     "failed_count": result["failed_count"],
                     "answers_ranked": result["answers_ranked"],
                     "answers_scored": result["answers_scored"],
-                    "processing_time": f"{processing_time}s",
-                    "final_submitted_count": result.get("final_submitted_count", 0)
+                    "processing_time": f"{processing_time}s"
                 }
             }
         except Exception as e:
             logger.error(f"Ranking process failed: {str(e)}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            return {"status": "error", "error": str(e)}
+    
+    def post_final_answers(self) -> dict:
+        """POST final answers logic - Input questions with correct answers only"""
+        try:
+            start_time = time.time()
+            
+            # Fetch current questions from main endpoint
+            questions = self.db_handler.fetch_all_questions()
+            
+            if not questions:
+                return {
+                    "status": "success",
+                    "results": {
+                        "questions_posted": 0,
+                        "questions_failed": 0,
+                        "skipped_mcq": 0,
+                        "skipped_insufficient": 0,
+                        "total_processed": 0,
+                        "processing_time": "0.0s",
+                        "message": "No questions found in main endpoint"
+                    }
+                }
+            
+            # Process POST to final endpoint
+            result = self.final_service.post_to_final_endpoint(questions)
+            processing_time = round(time.time() - start_time, 2)
+            
+            return {
+                "status": "success" if result["post_success"] else "error",
+                "results": {
+                    "questions_posted": result["questions_posted"],
+                    "questions_failed": result["questions_failed"],
+                    "skipped_mcq": result["skipped_mcq"],
+                    "skipped_insufficient": result["skipped_insufficient"],
+                    "total_processed": result["total_processed"],
+                    "processing_time": f"{processing_time}s",
+                    "message": "Success" if result["post_success"] else "Failed"
+                }
+            }
+        except Exception as e:
+            logger.error(f"Final POST process failed: {str(e)}")
             logger.error(f"Traceback: {traceback.format_exc()}")
             return {"status": "error", "error": str(e)}
 
@@ -133,7 +181,7 @@ class TemplateProvider:
     
     @staticmethod
     def get_debug_ui_template() -> str:
-        """Get the main debug UI template with updated design"""
+        """Get the main debug UI template with two separate buttons"""
         return '''
 <!DOCTYPE html>
 <html lang="en">
@@ -243,7 +291,7 @@ class TemplateProvider:
             background: #4299e1;
             color: white; 
             border: none; 
-            padding: 10px 20px; 
+            padding: 12px 24px; 
             border-radius: 6px; 
             cursor: pointer; 
             font-size: 14px;
@@ -252,7 +300,7 @@ class TemplateProvider:
             transition: all 0.2s;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
         }
 
         .btn:hover { 
@@ -288,6 +336,14 @@ class TemplateProvider:
 
         .btn-danger:hover {
             background: #e53e3e;
+        }
+
+        .btn-final {
+            background: #ed8936;
+        }
+
+        .btn-final:hover {
+            background: #dd6b20;
         }
 
         .status { 
@@ -384,8 +440,15 @@ class TemplateProvider:
         .button-group {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
+            gap: 12px;
             align-items: center;
+        }
+
+        .button-separator {
+            width: 1px;
+            height: 40px;
+            background: #e2e8f0;
+            margin: 0 8px;
         }
 
         .full-width-panel {
@@ -416,6 +479,15 @@ class TemplateProvider:
             .stats-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
+
+            .button-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .button-separator {
+                display: none;
+            }
         }
     </style>
 </head>
@@ -425,8 +497,8 @@ class TemplateProvider:
         <div class="logo">
             <div class="logo-icon">🏆</div>
             <div class="logo-text">
-                <h1>Survey Ranking</h1>
-                <p>Monitor ranking process</p>
+                <h1>Survey Ranking System</h1>
+                <p>Monitor the ranking processor</p>
             </div>
         </div>
     </div>
@@ -436,12 +508,18 @@ class TemplateProvider:
         <div class="panel">
             <div class="panel-header">
                 <h2 class="panel-title">🎮 Actions</h2>
-                <p class="panel-subtitle">Control and test the ranking system</p>
+                <p class="panel-subtitle">Perform ranking</p>
             </div>
             
             <div class="section">
                 <div class="button-group">
-                    <button class="btn btn-warning" onclick="runFullProcess()">🏆 Rank</button>
+                    <button class="btn btn-warning" onclick="processRanking()">🏆 RANK</button>
+                    <div class="button-separator"></div>
+                    <button class="btn btn-final" onclick="postFinalAnswers()">📤 POST</button>
+                </div>
+                <div style="margin-top: 16px; padding: 12px; background: #f7fafc; border-radius: 6px; font-size: 13px; color: #4a5568;">
+                    <strong>🏆 RANK:</strong> Process questions with 3+ correct answers to rank and score<br>
+                    <strong>📤 POST:</strong> Store final ranked questions
                 </div>
             </div>
         </div>
@@ -450,7 +528,7 @@ class TemplateProvider:
         <div class="panel">
             <div class="panel-header">
                 <h2 class="panel-title">📊 Status</h2>
-                <p class="panel-subtitle">Current system status and progress</p>
+                <p class="panel-subtitle">Current operation status and progress</p>
             </div>
             
             <div class="section">
@@ -467,14 +545,14 @@ class TemplateProvider:
         <div class="panel full-width-panel">
             <div class="panel-header">
                 <h2 class="panel-title">📈 Statistics</h2>
-                <p class="panel-subtitle">Performance metrics and results</p>
+                <p class="panel-subtitle">Performance metrics and operation results</p>
             </div>
             
             <div class="section">
                 <div class="stats-grid" id="stats-grid">
                     <div class="stat-card">
-                        <div class="stat-number" id="total-questions">-</div>
-                        <div class="stat-label">Total Questions</div>
+                        <div class="stat-number" id="total-answered">-</div>
+                        <div class="stat-label">Total Answered</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-number" id="processed-questions">-</div>
@@ -485,12 +563,8 @@ class TemplateProvider:
                         <div class="stat-label">Answers Ranked</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-number" id="processing-time">-</div>
-                        <div class="stat-label">Processing Time</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="final-submitted">-</div>
-                        <div class="stat-label">Final Submitted</div>
+                        <div class="stat-number" id="final-posted">-</div>
+                        <div class="stat-label">Final Posted</div>
                     </div>
                 </div>
             </div>
@@ -505,7 +579,7 @@ class TemplateProvider:
             
             <div class="section">
                 <div class="logs" id="logs">
-[INFO] Debug UI initialized
+[INFO] Debug UI initialized - Input questions only
 [INFO] Waiting for user action...
                 </div>
             </div>
@@ -531,7 +605,7 @@ class TemplateProvider:
 
         function updateStats(stats) {
             if (stats.total_questions !== undefined) {
-                document.getElementById('total-questions').textContent = stats.total_questions;
+                document.getElementById('total-answered').textContent = stats.total_questions;
             }
             if (stats.processed_count !== undefined) {
                 document.getElementById('processed-questions').textContent = stats.processed_count;
@@ -539,11 +613,8 @@ class TemplateProvider:
             if (stats.answers_ranked !== undefined) {
                 document.getElementById('ranked-answers').textContent = stats.answers_ranked;
             }
-            if (stats.processing_time !== undefined) {
-                document.getElementById('processing-time').textContent = stats.processing_time;
-            }
-            if (stats.final_submitted_count !== undefined) {
-                document.getElementById('final-submitted').textContent = stats.final_submitted_count;
+            if (stats.questions_posted !== undefined) {
+                document.getElementById('final-posted').textContent = stats.questions_posted;
             }
         }
 
@@ -588,12 +659,7 @@ class TemplateProvider:
         }
 
         async function processRanking() {
-            addLog('Processing ranking...');
-            await makeRequest('/api/process-ranking', 'POST');
-        }
-
-        async function runFullProcess() {
-            addLog('Starting ranking process...');
+            addLog('🏆 Processing ranking for Input questions only...');
             updateStatus('🏆 Processing rankings...', 'info');
             
             try {
@@ -603,13 +669,28 @@ class TemplateProvider:
                 await fetchQuestions();
                 await new Promise(resolve => setTimeout(resolve, 500));
                 
-                await processRanking();
+                await makeRequest('/api/process-ranking', 'POST');
                 
                 updateStatus('🎉 Ranking completed!', 'success');
                 addLog('Ranking process completed successfully!');
             } catch (error) {
                 updateStatus('❌ Ranking failed', 'error');
                 addLog('Ranking process failed', 'ERROR');
+            }
+        }
+
+        async function postFinalAnswers() {
+            addLog('📤 POSTing final answers to /admin/survey/final...');
+            updateStatus('📤 Posting to final endpoint...', 'info');
+            
+            try {
+                await makeRequest('/api/post-final-answers', 'POST');
+                
+                updateStatus('🎉 Final POST completed!', 'success');
+                addLog('Final POST process completed successfully!');
+            } catch (error) {
+                updateStatus('❌ Final POST failed', 'error');
+                addLog('Final POST process failed', 'ERROR');
             }
         }
 
@@ -635,8 +716,8 @@ class TemplateProvider:
 
 
 # Initialize application components
-db_handler, ranking_service = AppInitializer.initialize()
-api_endpoints = APIEndpoints(db_handler, ranking_service)
+db_handler, ranking_service, final_service = AppInitializer.initialize()
+api_endpoints = APIEndpoints(db_handler, ranking_service, final_service)
 
 # Route handlers
 @app.route('/')
@@ -667,8 +748,15 @@ def get_questions():
 
 @app.route('/api/process-ranking', methods=['POST'])
 def process_ranking():
-    """Process ranking for all questions"""
+    """Process ranking for Input questions only"""
     result = api_endpoints.process_ranking()
+    status_code = 500 if result["status"] == "error" else 200
+    return jsonify(result), status_code
+
+@app.route('/api/post-final-answers', methods=['POST'])
+def post_final_answers():
+    """POST final answers to /admin/survey/final"""
+    result = api_endpoints.post_final_answers()
     status_code = 500 if result["status"] == "error" else 200
     return jsonify(result), status_code
 

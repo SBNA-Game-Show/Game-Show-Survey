@@ -1,5 +1,5 @@
 """
-Final Service - Handles the /api/v1/admin/survey/final endpoint operations
+Final Service - Handles POST only for Input questions with 3+ correct answers
 """
 
 import json
@@ -14,7 +14,7 @@ logger = logging.getLogger('survey_analytics')
 
 
 class FinalEndpointHandler:
-    """Handles API communication with the /final endpoint"""
+    """Handles API communication with the /final endpoint - POST only"""
     
     def __init__(self):
         self.api = APIHandler(
@@ -23,41 +23,20 @@ class FinalEndpointHandler:
             endpoint="/api/v1/admin/survey/final"
         )
     
-    def fetch_final_questions(self) -> List[Dict]:
-        """Fetch all questions from the final endpoint"""
-        try:
-            logger.info("📥 Fetching questions from final endpoint...")
-            response_data = self.api.make_request("GET")
-            
-            # Handle empty database case
-            if response_data.get("_empty_database"):
-                logger.info("📭 Final endpoint is empty")
-                return []
-            
-            questions = ResponseProcessor.extract_questions_from_response(response_data)
-            logger.info(f"✅ Found {len(questions)} questions in final endpoint")
-            return questions
-            
-        except Exception as e:
-            if "404" in str(e) or "not found" in str(e).lower():
-                logger.info("📭 Final endpoint is empty (404)")
-                return []
-            logger.error(f"❌ Failed to fetch final questions: {str(e)}")
-            raise
-    
-    def post_new_questions(self, questions: List[Dict]) -> bool:
-        """POST new questions to the final endpoint"""
+    def post_questions(self, questions: List[Dict]) -> bool:
+        """POST questions to the final endpoint"""
         try:
             if not questions:
+                logger.warning("No questions to POST to final endpoint")
                 return True
             
-            logger.info(f"📤 POSTing {len(questions)} new questions to final endpoint")
+            logger.info(f"📤 POSTing {len(questions)} questions to final endpoint")
             
             # Format questions for API
             formatted_questions = [self._format_question_for_final_api(q) for q in questions]
             payload = {APIKeys.QUESTIONS: formatted_questions}
             
-            # DEBUG: Log the payload structure we're sending
+            # DEBUG: Log the payload structure
             logger.debug(f"POST payload structure: {json.dumps(payload, indent=2, default=str)[:500]}...")
             
             response = self.api.make_request("POST", payload)
@@ -74,33 +53,7 @@ class FinalEndpointHandler:
             logger.error(f"❌ Exception posting questions to final endpoint: {str(e)}")
             return False
     
-    def put_updated_questions(self, questions: List[Dict]) -> bool:
-        """PUT updated questions to the final endpoint"""
-        try:
-            if not questions:
-                return True
-            
-            logger.info(f"📤 PUTting {len(questions)} updated questions to final endpoint")
-            
-            # Format questions for API (include questionID for PUT)
-            formatted_questions = [self._format_question_for_final_api(q, include_question_id=True) for q in questions]
-            payload = {APIKeys.QUESTIONS: formatted_questions}
-            
-            response = self.api.make_request("PUT", payload)
-            
-            if ResponseProcessor.is_success_response(response):
-                logger.info(f"✅ Successfully updated {len(questions)} questions in final endpoint")
-                return True
-            else:
-                error_msg = response.get(APIKeys.MESSAGE, str(response))
-                logger.error(f"❌ Failed to update questions in final endpoint: {error_msg}")
-                return False
-                
-        except Exception as e:
-            logger.error(f"❌ Exception updating questions in final endpoint: {str(e)}")
-            return False
-    
-    def _format_question_for_final_api(self, question: Dict, include_question_id: bool = False) -> Dict:
+    def _format_question_for_final_api(self, question: Dict) -> Dict:
         """Format question for final endpoint API submission"""
         formatted_question = {
             QuestionFields.QUESTION: question.get(QuestionFields.QUESTION, ''),
@@ -109,32 +62,20 @@ class FinalEndpointHandler:
             QuestionFields.QUESTION_LEVEL: question.get(QuestionFields.QUESTION_LEVEL, ''),
             QuestionFields.TIMES_SKIPPED: question.get(QuestionFields.TIMES_SKIPPED, 0),
             QuestionFields.TIMES_ANSWERED: question.get(QuestionFields.TIMES_ANSWERED, 0),
-            QuestionFields.ANSWERS: [self._format_answer_for_final_api(a, include_answer_id=include_question_id) for a in question.get(QuestionFields.ANSWERS, [])]
+            QuestionFields.ANSWERS: [self._format_answer_for_final_api(a) for a in question.get(QuestionFields.ANSWERS, [])]
         }
-        
-        # Include questionID for PUT requests
-        if include_question_id:
-            formatted_question[QuestionFields.QUESTION_ID] = QuestionFormatter.get_question_id(question)
         
         return formatted_question
     
-    def _format_answer_for_final_api(self, answer: Dict, include_answer_id: bool = False) -> Dict:
+    def _format_answer_for_final_api(self, answer: Dict) -> Dict:
         """Format answer for final endpoint API submission"""
-        formatted_answer = {
+        return {
             AnswerFields.ANSWER: answer.get(AnswerFields.ANSWER, ''),
-            AnswerFields.IS_CORRECT: answer.get(AnswerFields.IS_CORRECT, False),
             AnswerFields.RESPONSE_COUNT: answer.get(AnswerFields.RESPONSE_COUNT, 0),
+            AnswerFields.IS_CORRECT: answer.get(AnswerFields.IS_CORRECT, False),
             AnswerFields.RANK: answer.get(AnswerFields.RANK, 0),
             AnswerFields.SCORE: answer.get(AnswerFields.SCORE, 0)
         }
-        
-        # Include answerID only for PUT requests (when include_answer_id=True)
-        if include_answer_id:
-            answer_id = answer.get(AnswerFields.ID) or answer.get(AnswerFields.ANSWER_ID)
-            if answer_id:
-                formatted_answer[AnswerFields.ANSWER_ID] = answer_id
-        
-        return formatted_answer
 
 
 class QuestionValidator:
@@ -146,55 +87,29 @@ class QuestionValidator:
         question_type = question.get(QuestionFields.QUESTION_TYPE, '').lower()
         answers = question.get(QuestionFields.ANSWERS, [])
         
-        if question_type == 'input':
-            return QuestionValidator._validate_input_question(answers)
-        elif question_type == 'mcq':
-            return QuestionValidator._validate_mcq_question(answers)
-        else:
-            return False, f"Unknown question type: {question_type}"
-    
-    @staticmethod
-    def _validate_input_question(answers: List[Dict]) -> Tuple[bool, str]:
-        """Validate Input type question - needs at least 3 correct answers"""
+        # Only process Input questions
+        if question_type != 'input':
+            return False, f"Skipping {question_type} question - only Input questions are processed"
+        
+        # Check for at least 3 correct answers
         correct_answers = [a for a in answers if a.get(AnswerFields.IS_CORRECT, False)]
         
         if len(correct_answers) < 3:
             return False, f"Input question needs at least 3 correct answers, found {len(correct_answers)}"
         
         return True, "Valid Input question"
-    
-    @staticmethod
-    def _validate_mcq_question(answers: List[Dict]) -> Tuple[bool, str]:
-        """Validate MCQ type question - needs exactly 4 answers with 1 correct"""
-        if len(answers) != 4:
-            return False, f"MCQ question needs exactly 4 answers, found {len(answers)}"
-        
-        correct_answers = [a for a in answers if a.get(AnswerFields.IS_CORRECT, False)]
-        
-        if len(correct_answers) != 1:
-            return False, f"MCQ question needs exactly 1 correct answer, found {len(correct_answers)}"
-        
-        return True, "Valid MCQ question"
 
 
 class AnswerFilter:
-    """Filters answers based on question type for final endpoint"""
+    """Filters answers for final endpoint - only correct answers"""
     
     @staticmethod
     def filter_answers_for_final(question: Dict) -> Dict:
-        """Filter answers based on question type"""
-        question_type = question.get(QuestionFields.QUESTION_TYPE, '').lower()
+        """Filter to include only correct answers"""
         answers = question.get(QuestionFields.ANSWERS, [])
         
-        if question_type == 'input':
-            # Input: Only correct answers
-            filtered_answers = [a for a in answers if a.get(AnswerFields.IS_CORRECT, False)]
-        elif question_type == 'mcq':
-            # MCQ: All answers
-            filtered_answers = answers
-        else:
-            # Unknown type: Keep all answers
-            filtered_answers = answers
+        # Only include correct answers
+        filtered_answers = [a for a in answers if a.get(AnswerFields.IS_CORRECT, False)]
         
         # Create a copy of the question with filtered answers
         filtered_question = question.copy()
@@ -203,203 +118,88 @@ class AnswerFilter:
         return filtered_question
 
 
-class QuestionComparator:
-    """Compares questions to determine if updates are needed"""
-    
-    @staticmethod
-    def compare_questions(main_question: Dict, final_question: Dict) -> bool:
-        """
-        Compare questions to see if main question has changes vs final question
-        Returns True if questions are different (need update), False if same
-        """
-        # Only compare answers as per requirement
-        main_answers = main_question.get(QuestionFields.ANSWERS, [])
-        final_answers = final_question.get(QuestionFields.ANSWERS, [])
-        
-        # If different number of answers, definitely different
-        if len(main_answers) != len(final_answers):
-            return True
-        
-        # Compare each answer
-        for main_answer, final_answer in zip(main_answers, final_answers):
-            if QuestionComparator._compare_answers(main_answer, final_answer):
-                return True  # Found a difference
-        
-        return False  # No differences found
-    
-    @staticmethod
-    def _compare_answers(main_answer: Dict, final_answer: Dict) -> bool:
-        """
-        Compare individual answers
-        Returns True if answers are different, False if same
-        """
-        # Fields to compare
-        fields_to_compare = [
-            AnswerFields.ANSWER,
-            AnswerFields.IS_CORRECT,
-            AnswerFields.RESPONSE_COUNT,
-            AnswerFields.RANK,
-            AnswerFields.SCORE
-        ]
-        
-        for field in fields_to_compare:
-            main_value = main_answer.get(field)
-            final_value = final_answer.get(field)
-            
-            if main_value != final_value:
-                return True  # Found a difference
-        
-        return False  # No differences found
-
-
 class FinalService:
-    """Main service for handling final endpoint operations"""
+    """Main service for handling final endpoint POST operations"""
     
     def __init__(self, db_handler):
         self.db = db_handler
         self.final_api = FinalEndpointHandler()
         self.validator = QuestionValidator()
         self.answer_filter = AnswerFilter()
-        self.comparator = QuestionComparator()
     
-    def process_final_endpoint_sync(self, main_questions: List[Dict]) -> Dict:
+    def post_to_final_endpoint(self, main_questions: List[Dict]) -> Dict:
         """
-        Process synchronization with final endpoint
-        - POST new questions
-        - PUT updated questions  
-        - Skip unchanged questions
+        POST Input questions with 3+ correct answers to final endpoint
+        Only includes correct answers in the POST
         """
         try:
-            logger.info("🎯 Starting final endpoint synchronization...")
+            logger.info("🎯 Starting final endpoint POST operation...")
             
-            # Fetch existing final questions
-            final_questions = self.final_api.fetch_final_questions()
-            final_questions_dict = {QuestionFormatter.get_question_id(q): q for q in final_questions}
+            # Process and filter questions
+            valid_questions = self._filter_and_process_questions(main_questions)
             
-            # Process main questions
-            result = self._categorize_questions(main_questions, final_questions_dict)
+            if not valid_questions['questions_to_post']:
+                logger.warning("No valid questions to POST to final endpoint")
+                return self._create_result(valid_questions, False, 0)
             
-            # Execute operations
-            post_success = self._execute_post_operations(result['new_questions'])
-            put_success = self._execute_put_operations(result['updated_questions'])
+            # Execute POST operation
+            post_success = self.final_api.post_questions(valid_questions['questions_to_post'])
             
-            # Compile final result
-            return self._compile_final_result(result, post_success, put_success)
+            # Compile result
+            return self._create_result(valid_questions, post_success, len(valid_questions['questions_to_post']))
             
         except Exception as e:
-            logger.error(f"❌ Final endpoint synchronization failed: {str(e)}")
+            logger.error(f"❌ Final endpoint POST operation failed: {str(e)}")
             raise
     
-    def _categorize_questions(self, main_questions: List[Dict], final_questions_dict: Dict) -> Dict:
-        """Categorize questions into new, updated, unchanged, and invalid"""
-        new_questions = []
-        updated_questions = []
-        unchanged_count = 0
-        invalid_count = 0
+    def _filter_and_process_questions(self, main_questions: List[Dict]) -> Dict:
+        """Filter and process questions for final endpoint"""
+        questions_to_post = []
+        skipped_mcq = 0
+        skipped_insufficient = 0
         
         for question in main_questions:
             question_id = QuestionFormatter.get_question_id(question)
+            question_type = question.get(QuestionFields.QUESTION_TYPE, '').lower()
+            
+            # Skip MCQ questions
+            if question_type == 'mcq':
+                logger.debug(f"⏭️ Skipping MCQ question {question_id}")
+                skipped_mcq += 1
+                continue
             
             # Validate question for final endpoint
             is_valid, validation_msg = self.validator.validate_question_for_final(question)
             
             if not is_valid:
-                logger.debug(f"⏭️ Skipping question {question_id}: {validation_msg}")
-                invalid_count += 1
+                if "at least 3 correct answers" in validation_msg:
+                    logger.error(f"❌ Question {question_id}: {validation_msg}")
+                    skipped_insufficient += 1
+                else:
+                    logger.debug(f"⏭️ Question {question_id}: {validation_msg}")
                 continue
             
-            # Filter answers based on question type
+            # Filter to only correct answers
             filtered_question = self.answer_filter.filter_answers_for_final(question)
+            questions_to_post.append(filtered_question)
             
-            # Check if question exists in final endpoint
-            if question_id in final_questions_dict:
-                # Question exists - check if it needs updating
-                final_question = final_questions_dict[question_id]
-                
-                if self.comparator.compare_questions(filtered_question, final_question):
-                    # Question has changes - needs PUT
-                    # IMPORTANT: Use the final endpoint's question ID and answer IDs for PUT
-                    updated_question = self._prepare_question_for_update(filtered_question, final_question)
-                    
-                    updated_questions.append(updated_question)
-                    final_question_id = QuestionFormatter.get_question_id(final_question)
-                    logger.debug(f"📝 Question {question_id} needs update (final ID: {final_question_id})")
-                else:
-                    # Question unchanged - skip
-                    unchanged_count += 1
-                    logger.debug(f"✅ Question {question_id} unchanged")
-            else:
-                # Question doesn't exist - needs POST
-                new_questions.append(filtered_question)
-                logger.debug(f"🆕 Question {question_id} is new")
+            logger.debug(f"✅ Question {question_id} ready for POST ({len(filtered_question[QuestionFields.ANSWERS])} correct answers)")
         
-        logger.info(f"📊 Final sync analysis: {len(new_questions)} new, {len(updated_questions)} updated, {unchanged_count} unchanged, {invalid_count} invalid")
+        logger.info(f"📊 Final POST analysis: {len(questions_to_post)} to post, {skipped_mcq} MCQ skipped, {skipped_insufficient} insufficient answers")
         
         return {
-            'new_questions': new_questions,
-            'updated_questions': updated_questions,
-            'unchanged_count': unchanged_count,
-            'invalid_count': invalid_count
+            'questions_to_post': questions_to_post,
+            'skipped_mcq': skipped_mcq,
+            'skipped_insufficient': skipped_insufficient
         }
     
-    def _prepare_question_for_update(self, main_question: Dict, final_question: Dict) -> Dict:
-        """Prepare question for PUT request using final endpoint IDs"""
-        updated_question = main_question.copy()
-        
-        # Use final endpoint's question ID
-        final_question_id = QuestionFormatter.get_question_id(final_question)
-        updated_question['_id'] = final_question_id
-        updated_question['questionID'] = final_question_id
-        
-        # Map answers to use final endpoint answer IDs
-        final_answers = final_question.get(QuestionFields.ANSWERS, [])
-        main_answers = updated_question.get(QuestionFields.ANSWERS, [])
-        
-        # Create a mapping of answer text to final answer ID
-        final_answer_map = {}
-        for final_answer in final_answers:
-            answer_text = final_answer.get(AnswerFields.ANSWER, '')
-            answer_id = final_answer.get(AnswerFields.ID) or final_answer.get(AnswerFields.ANSWER_ID)
-            if answer_text and answer_id:
-                final_answer_map[answer_text] = answer_id
-        
-        # Update main answers with final endpoint answer IDs where matches exist
-        for main_answer in main_answers:
-            answer_text = main_answer.get(AnswerFields.ANSWER, '')
-            if answer_text in final_answer_map:
-                main_answer['_id'] = final_answer_map[answer_text]
-                main_answer[AnswerFields.ANSWER_ID] = final_answer_map[answer_text]
-        
-        return updated_question
-    
-    def _execute_post_operations(self, new_questions: List[Dict]) -> bool:
-        """Execute POST operations for new questions"""
-        if not new_questions:
-            logger.info("📭 No new questions to POST to final endpoint")
-            return True
-        
-        return self.final_api.post_new_questions(new_questions)
-    
-    def _execute_put_operations(self, updated_questions: List[Dict]) -> bool:
-        """Execute PUT operations for updated questions"""
-        if not updated_questions:
-            logger.info("📭 No questions to PUT to final endpoint")
-            return True
-        
-        return self.final_api.put_updated_questions(updated_questions)
-    
-    def _compile_final_result(self, categorization_result: Dict, post_success: bool, put_success: bool) -> Dict:
-        """Compile final result statistics"""
-        new_count = len(categorization_result['new_questions'])
-        updated_count = len(categorization_result['updated_questions'])
-        
+    def _create_result(self, filter_result: Dict, post_success: bool, posted_count: int) -> Dict:
+        """Create result dictionary"""
         return {
-            'new_questions_count': new_count,
-            'updated_questions_count': updated_count,
-            'unchanged_questions_count': categorization_result['unchanged_count'],
-            'invalid_questions_count': categorization_result['invalid_count'],
+            'questions_posted': posted_count if post_success else 0,
+            'questions_failed': posted_count if not post_success else 0,
+            'skipped_mcq': filter_result['skipped_mcq'],
+            'skipped_insufficient': filter_result['skipped_insufficient'],
             'post_success': post_success,
-            'put_success': put_success,
-            'final_submitted_count': (new_count if post_success else 0) + (updated_count if put_success else 0),
-            'final_failed_count': (new_count if not post_success else 0) + (updated_count if not put_success else 0)
+            'total_processed': len(filter_result['questions_to_post']) + filter_result['skipped_mcq'] + filter_result['skipped_insufficient']
         }

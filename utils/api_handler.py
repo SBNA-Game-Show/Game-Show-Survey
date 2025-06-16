@@ -293,14 +293,18 @@ class APIHandler:
             raise APIException(f"Invalid JSON response: {str(e)}")
     
     def _make_http_request(self, method: str, data: Optional[Dict] = None) -> requests.Response:
-        """Make HTTP request with clean error handling"""
+        """Make HTTP request with clean error handling - now supports DELETE"""
         try:
-            if method.upper() == "GET":
+            method_upper = method.upper()
+            
+            if method_upper == "GET":
                 return requests.get(self.url, headers=self.headers, timeout=self.timeout)
-            elif method.upper() == "PUT":
+            elif method_upper == "PUT":
                 return requests.put(self.url, headers=self.headers, json=data, timeout=self.timeout)
-            elif method.upper() == "POST":
+            elif method_upper == "POST":
                 return requests.post(self.url, headers=self.headers, json=data, timeout=self.timeout)
+            elif method_upper == "DELETE":
+                return requests.delete(self.url, headers=self.headers, json=data, timeout=self.timeout)
             else:
                 raise ValueError(f"Unsupported HTTP method: {method}")
         

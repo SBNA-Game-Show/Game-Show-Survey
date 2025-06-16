@@ -1,5 +1,5 @@
 """
-Final Service - Handles POST only for Input questions with 3+ correct answers
+Final Service - Handles GET, DELETE, then POST for Input questions with 3+ correct answers
 """
 
 import json
@@ -14,7 +14,7 @@ logger = logging.getLogger('survey_analytics')
 
 
 class FinalEndpointHandler:
-    """Handles API communication with the /final endpoint - POST only"""
+    """Handles API communication with the /final endpoint - GET, DELETE, and POST"""
     
     def __init__(self):
         self.api = APIHandler(
@@ -22,6 +22,66 @@ class FinalEndpointHandler:
             api_key=Config.API_KEY,
             endpoint="/api/v1/admin/survey/final"
         )
+    
+    def get_existing_questions(self) -> List[Dict]:
+        """GET existing questions from final endpoint"""
+        try:
+            logger.info("📥 Getting existing questions from final endpoint")
+            
+            response = self.api.make_request("GET")
+            
+            # Extract questions from response
+            questions = ResponseProcessor.extract_questions_from_response(response)
+            
+            logger.info(f"✅ Found {len(questions)} existing questions in final endpoint")
+            return questions
+            
+        except Exception as e:
+            # If GET fails (e.g., 404 for empty), treat as no existing questions
+            if "404" in str(e) or "not found" in str(e).lower():
+                logger.info("📭 No existing questions found in final endpoint (empty)")
+                return []
+            else:
+                logger.error(f"❌ Failed to get existing questions from final endpoint: {str(e)}")
+                raise
+    
+    def delete_existing_questions(self, existing_questions: List[Dict]) -> bool:
+        """DELETE existing questions from final endpoint"""
+        try:
+            if not existing_questions:
+                logger.info("⏭️ No existing questions to delete")
+                return True
+            
+            logger.info(f"🗑️ Deleting {len(existing_questions)} existing questions from final endpoint")
+            
+            # Build delete payload using _id from GET response as questionID
+            delete_payload = {
+                "questions": [
+                    {"questionID": question.get("_id")} 
+                    for question in existing_questions 
+                    if question.get("_id")
+                ]
+            }
+            
+            if not delete_payload["questions"]:
+                logger.warning("⚠️ No valid question IDs found for deletion")
+                return True
+            
+            logger.debug(f"DELETE payload: {json.dumps(delete_payload, indent=2)}")
+            
+            response = self.api.make_request("DELETE", delete_payload)
+            
+            if ResponseProcessor.is_success_response(response):
+                logger.info(f"✅ Successfully deleted {len(delete_payload['questions'])} questions from final endpoint")
+                return True
+            else:
+                error_msg = response.get(APIKeys.MESSAGE, str(response))
+                logger.error(f"❌ Failed to delete questions from final endpoint: {error_msg}")
+                return False
+                
+        except Exception as e:
+            logger.error(f"❌ Exception deleting questions from final endpoint: {str(e)}")
+            return False
     
     def post_questions(self, questions: List[Dict]) -> bool:
         """POST questions to the final endpoint"""
@@ -119,7 +179,7 @@ class AnswerFilter:
 
 
 class FinalService:
-    """Main service for handling final endpoint POST operations"""
+    """Main service for handling final endpoint GET, DELETE, and POST operations"""
     
     def __init__(self, db_handler):
         self.db = db_handler
@@ -129,27 +189,46 @@ class FinalService:
     
     def post_to_final_endpoint(self, main_questions: List[Dict]) -> Dict:
         """
-        POST Input questions with 3+ correct answers to final endpoint
+        Complete flow: GET existing questions, DELETE them, then POST new questions
+        Only processes Input questions with 3+ correct answers
         Only includes correct answers in the POST
         """
         try:
-            logger.info("🎯 Starting final endpoint POST operation...")
+            logger.info("🎯 Starting final endpoint operation: GET → DELETE → POST")
             
-            # Process and filter questions
+            # Step 1: GET existing questions from final endpoint
+            existing_questions = self.final_api.get_existing_questions()
+            
+            # Step 2: DELETE existing questions if any found
+            if existing_questions:
+                delete_success = self.final_api.delete_existing_questions(existing_questions)
+                if not delete_success:
+                    logger.error("❌ Failed to delete existing questions - aborting POST")
+                    return self._create_result_with_deletion({}, False, 0, len(existing_questions), False)
+            else:
+                logger.info("⏭️ No existing questions to delete - proceeding to POST")
+            
+            # Step 3: Process and filter new questions for POST
             valid_questions = self._filter_and_process_questions(main_questions)
             
             if not valid_questions['questions_to_post']:
                 logger.warning("No valid questions to POST to final endpoint")
-                return self._create_result(valid_questions, False, 0)
+                return self._create_result_with_deletion(valid_questions, True, 0, len(existing_questions), True)
             
-            # Execute POST operation
+            # Step 4: Execute POST operation
             post_success = self.final_api.post_questions(valid_questions['questions_to_post'])
             
             # Compile result
-            return self._create_result(valid_questions, post_success, len(valid_questions['questions_to_post']))
+            return self._create_result_with_deletion(
+                valid_questions, 
+                post_success, 
+                len(valid_questions['questions_to_post']), 
+                len(existing_questions),
+                len(existing_questions) == 0 or delete_success
+            )
             
         except Exception as e:
-            logger.error(f"❌ Final endpoint POST operation failed: {str(e)}")
+            logger.error(f"❌ Final endpoint operation failed: {str(e)}")
             raise
     
     def _filter_and_process_questions(self, main_questions: List[Dict]) -> Dict:
@@ -193,13 +272,15 @@ class FinalService:
             'skipped_insufficient': skipped_insufficient
         }
     
-    def _create_result(self, filter_result: Dict, post_success: bool, posted_count: int) -> Dict:
-        """Create result dictionary"""
+    def _create_result_with_deletion(self, filter_result: Dict, post_success: bool, posted_count: int, deleted_count: int, delete_success: bool) -> Dict:
+        """Create result dictionary including deletion information"""
         return {
             'questions_posted': posted_count if post_success else 0,
             'questions_failed': posted_count if not post_success else 0,
-            'skipped_mcq': filter_result['skipped_mcq'],
-            'skipped_insufficient': filter_result['skipped_insufficient'],
+            'questions_deleted': deleted_count if delete_success else 0,
+            'skipped_mcq': filter_result.get('skipped_mcq', 0),
+            'skipped_insufficient': filter_result.get('skipped_insufficient', 0),
             'post_success': post_success,
-            'total_processed': len(filter_result['questions_to_post']) + filter_result['skipped_mcq'] + filter_result['skipped_insufficient']
+            'delete_success': delete_success,
+            'total_processed': len(filter_result.get('questions_to_post', [])) + filter_result.get('skipped_mcq', 0) + filter_result.get('skipped_insufficient', 0)
         }

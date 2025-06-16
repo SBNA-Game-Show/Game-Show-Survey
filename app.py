@@ -133,7 +133,7 @@ class APIEndpoints:
             return {"status": "error", "error": str(e)}
     
     def post_final_answers(self) -> dict:
-        """POST final answers logic - Input questions with correct answers only"""
+        """POST final answers logic - GET, DELETE, then POST Input questions with correct answers only"""
         try:
             start_time = time.time()
             
@@ -146,6 +146,7 @@ class APIEndpoints:
                     "results": {
                         "questions_posted": 0,
                         "questions_failed": 0,
+                        "questions_deleted": 0,
                         "skipped_mcq": 0,
                         "skipped_insufficient": 0,
                         "total_processed": 0,
@@ -154,20 +155,21 @@ class APIEndpoints:
                     }
                 }
             
-            # Process POST to final endpoint
+            # Process GET → DELETE → POST to final endpoint
             result = self.final_service.post_to_final_endpoint(questions)
             processing_time = round(time.time() - start_time, 2)
             
             return {
-                "status": "success" if result["post_success"] else "error",
+                "status": "success" if result["post_success"] and result["delete_success"] else "error",
                 "results": {
                     "questions_posted": result["questions_posted"],
                     "questions_failed": result["questions_failed"],
+                    "questions_deleted": result["questions_deleted"],
                     "skipped_mcq": result["skipped_mcq"],
                     "skipped_insufficient": result["skipped_insufficient"],
                     "total_processed": result["total_processed"],
                     "processing_time": f"{processing_time}s",
-                    "message": "Success" if result["post_success"] else "Failed"
+                    "message": "Success" if result["post_success"] and result["delete_success"] else "Failed"
                 }
             }
         except Exception as e:
@@ -519,7 +521,7 @@ class TemplateProvider:
                 </div>
                 <div style="margin-top: 16px; padding: 12px; background: #f7fafc; border-radius: 6px; font-size: 13px; color: #4a5568;">
                     <strong>🏆 RANK:</strong> Process questions with 3+ correct answers to rank and score<br>
-                    <strong>📤 POST:</strong> Store final ranked questions
+                    <strong>📤 POST:</strong> GET existing → DELETE all → POST final ranked questions
                 </div>
             </div>
         </div>
@@ -563,8 +565,8 @@ class TemplateProvider:
                         <div class="stat-label">Answers Ranked</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-number" id="final-posted">-</div>
-                        <div class="stat-label">Final Posted</div>
+                        <div class="stat-number" id="questions-deleted">-</div>
+                        <div class="stat-label">Questions Deleted</div>
                     </div>
                 </div>
             </div>
@@ -613,8 +615,8 @@ class TemplateProvider:
             if (stats.answers_ranked !== undefined) {
                 document.getElementById('ranked-answers').textContent = stats.answers_ranked;
             }
-            if (stats.questions_posted !== undefined) {
-                document.getElementById('final-posted').textContent = stats.questions_posted;
+            if (stats.questions_deleted !== undefined) {
+                document.getElementById('questions-deleted').textContent = stats.questions_deleted;
             }
         }
 
@@ -680,17 +682,17 @@ class TemplateProvider:
         }
 
         async function postFinalAnswers() {
-            addLog('📤 POSTing final answers to /admin/survey/final...');
-            updateStatus('📤 Posting to final endpoint...', 'info');
+            addLog('📤 Starting final endpoint operation: GET → DELETE → POST...');
+            updateStatus('📤 Getting existing questions...', 'info');
             
             try {
                 await makeRequest('/api/post-final-answers', 'POST');
                 
-                updateStatus('🎉 Final POST completed!', 'success');
-                addLog('Final POST process completed successfully!');
+                updateStatus('🎉 Final operation completed!', 'success');
+                addLog('Final operation completed successfully: GET → DELETE → POST');
             } catch (error) {
-                updateStatus('❌ Final POST failed', 'error');
-                addLog('Final POST process failed', 'ERROR');
+                updateStatus('❌ Final operation failed', 'error');
+                addLog('Final operation failed', 'ERROR');
             }
         }
 

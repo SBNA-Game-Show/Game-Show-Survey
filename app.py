@@ -190,7 +190,7 @@ class TemplateProvider:
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Survey Ranking Debug UI</title>
+    <title>Survey Ranking</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
@@ -521,7 +521,7 @@ class TemplateProvider:
                 </div>
                 <div style="margin-top: 16px; padding: 12px; background: #f7fafc; border-radius: 6px; font-size: 13px; color: #4a5568;">
                     <strong>🏆 RANK:</strong> Process questions with 3+ correct answers to rank and score<br>
-                    <strong>📤 POST:</strong> GET existing → DELETE all → POST final ranked questions
+                    <strong>📤 POST:</strong> POST final ranked questions
                 </div>
             </div>
         </div>
@@ -564,10 +564,7 @@ class TemplateProvider:
                         <div class="stat-number" id="ranked-answers">-</div>
                         <div class="stat-label">Answers Ranked</div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="questions-deleted">-</div>
-                        <div class="stat-label">Questions Deleted</div>
-                    </div>
+                   
                 </div>
             </div>
         </div>

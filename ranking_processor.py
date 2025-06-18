@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
-Refactored One-time ranking processor
-Clean, modular, and easy to understand
+Updated Ranking Processor - Input questions only, no automatic final processing
 """
 
 import sys
@@ -20,18 +19,20 @@ class ProcessorDisplay:
     def print_header():
         """Print application header"""
         print("🚀 Starting Survey Answer Ranking Processor")
-        print("=" * 60)
+        print("📝 Processing Input Questions Only (MCQ questions will be skipped)")
+        print("=" * 70)
     
     @staticmethod
     def print_results(result: Dict, processing_time: float):
         """Print processing results in a formatted way"""
-        print("\n" + "=" * 60)
-        print("📊 RANKING PROCESS COMPLETED")
-        print("=" * 60)
+        print("\n" + "=" * 70)
+        print("📊 RANKING PROCESS COMPLETED - INPUT QUESTIONS ONLY")
+        print("=" * 70)
         print(f"⏱️  Processing Time: {processing_time}s")
         print(f"📝 Total Questions: {result['total_questions']}")
-        print(f"✅ Processed: {result['processed_count']}")
-        print(f"⏭️  Skipped: {result['skipped_count']}")
+        print(f"✅ Input Questions Processed: {result['processed_count']}")
+        print(f"⏭️  MCQ Questions Skipped: {result['skipped_mcq']}")
+        print(f"❌ Input Questions Skipped (insufficient answers): {result['skipped_insufficient']}")
         print(f"💾 Updated in Database: {result['updated_count']}")
         print(f"❌ Failed Updates: {result['failed_count']}")
         print(f"🏆 Answers Ranked: {result['answers_ranked']}")
@@ -39,8 +40,9 @@ class ProcessorDisplay:
         
         ProcessorDisplay._print_warnings_and_success(result)
         
-        print("=" * 60)
-        print("🏁 Process finished. Application will now exit.")
+        print("=" * 70)
+        print("🏁 Ranking process finished.")
+        print("💡 Use the UI or separate command to POST to final endpoint.")
     
     @staticmethod
     def _print_warnings_and_success(result: Dict):
@@ -48,10 +50,16 @@ class ProcessorDisplay:
         if result['failed_count'] > 0:
             print(f"\n⚠️  Warning: {result['failed_count']} questions failed to update")
         
+        if result['skipped_mcq'] > 0:
+            print(f"\nℹ️  Note: {result['skipped_mcq']} MCQ questions were skipped (Input questions only)")
+        
+        if result['skipped_insufficient'] > 0:
+            print(f"\n⚠️  Warning: {result['skipped_insufficient']} Input questions skipped (need 3+ correct answers)")
+        
         if result['updated_count'] > 0:
-            print(f"\n🎉 Success! {result['updated_count']} questions updated with rankings")
+            print(f"\n🎉 Success! {result['updated_count']} Input questions updated with rankings")
         else:
-            print(f"\n ℹ️ No questions were updated (possibly no correct answers found)")
+            print(f"\nℹ️  No questions were updated (possibly no valid Input questions found)")
     
     @staticmethod
     def print_error(error_msg: str):
@@ -121,7 +129,7 @@ class RankingProcessor:
     
     def execute_ranking_process(self) -> tuple:
         """Execute the main ranking process"""
-        self.logger.info("⚙️ Starting ranking process...")
+        self.logger.info("⚙️ Starting ranking process for Input questions only...")
         start_time = time.time()
         
         try:
@@ -165,7 +173,7 @@ class RankingProcessor:
 
 
 def main() -> bool:
-    """Main function - entry point for the ranking processor"""
+    """Main function, entry point for ranking processor"""
     processor = RankingProcessor()
     return processor.run()
 

@@ -612,9 +612,7 @@ class TemplateProvider:
             if (stats.answers_ranked !== undefined) {
                 document.getElementById('ranked-answers').textContent = stats.answers_ranked;
             }
-            if (stats.questions_deleted !== undefined) {
-                document.getElementById('questions-deleted').textContent = stats.questions_deleted;
-            }
+           
         }
 
         async function makeRequest(endpoint, method = 'GET') {

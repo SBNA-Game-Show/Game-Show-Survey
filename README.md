@@ -38,7 +38,6 @@ Create a .env file in the root directory:
 DB_URI=<your-huggingface-useraccount-name-with-predict-route>
 add a request if you want mine
 4. Start the server
-``` bash
 npm start
 The app will be running at:
 http://localhost:3000

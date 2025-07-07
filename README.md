@@ -47,7 +47,7 @@ http://localhost:3000
 ```
 
 ## 🧪 Usage
-** Open the app in your browser.
+Open the app in your browser.
 
 Click "Enable Auto Transcription".
 

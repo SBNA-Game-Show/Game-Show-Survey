@@ -76,7 +76,7 @@ python app.py
 
 Then visit `http://localhost:5000` in your browser for:
 - **🏆 RANK**: Process Input questions with ranking and scoring
-- **📤 POST**: Execute GET → DELETE → POST to final endpoint
+- **📤 POST**: Execute GET(if exists) → DELETE(if exists) → POST from /survey to /survey/final endpoint
 - Real-time system monitoring
 - API diagnostics and debugging tools
 

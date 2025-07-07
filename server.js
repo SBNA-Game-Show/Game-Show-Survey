@@ -56,7 +56,8 @@ app.post('/transcribe', upload.single('audio'), async (req, res) => {
         console.log(transcriptionText);
         console.log('=' .repeat(50));
         console.log('⏰ Time:', new Date().toLocaleString());
-        console.log('📊 Audio duration: ~' + Math.round(req.file.size / 16000) + 's');
+        console.log('📊 Audio duration: ~'
+             + Math.round(req.file.size / 16000) + 's');
         console.log('');
 
         res.json({ 

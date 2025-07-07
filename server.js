@@ -3,6 +3,8 @@ import multer from 'multer';
 import { Client } from "@gradio/client";
 import path from 'path';
 import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
+dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,7 +20,7 @@ app.use(express.static('public'));
 let client;
 async function initializeClient() {
     try {
-    client = await Client.connect("dsa/fds");
+    client = await Client.connect(process.env.DB_URI);
         console.log("Connected to Gradio client");
     } catch (error) {
         console.error("Failed to connect to Gradio client:", error);

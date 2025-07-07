@@ -8,7 +8,7 @@ A Python-based system for processing survey data, ranking answers by response co
 - **Input Questions Only**: Processes only Input-type questions, skips MCQ questions automatically
 - **Similarity Processing**: Merges similar answers to reduce duplicates
 - **API Integration**: Communicates with remote survey database via REST API
-- **Final Endpoint Management**: GET → DELETE → POST workflow for final answer submission
+- **Final Endpoint Management**: POST workflow for final answer submission from /survey to /survey/final
 - **Comprehensive Logging**: Detailed logging with configurable levels
 - **Validation**: Robust data validation and error handling
 - **Debug Tools**: Built-in debugging and diagnostic endpoints

@@ -8,8 +8,6 @@ A real-time voice activity detector and speech-to-text transcriber using **Node.
 
 🔗 [Try the live app here](https://sanskrit-stt.onrender.com/)
 
-> Replace this with your actual deployed URL.
-
 ---
 
 ## 📦 Features

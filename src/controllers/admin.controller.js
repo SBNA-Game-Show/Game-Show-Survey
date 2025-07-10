@@ -51,21 +51,9 @@ const addAdmin = asyncHandler(async (req, res) => {
         new ApiResponse(200, createdAdmin, "New Admin created successfully")
     );
     
-        // // 🧠 send a success response, include token in response
-        // return res.status(201).json(
-        //     new ApiResponse(201, {
-        //      _id: admin._id,
-        //     userName: admin.userName,
-        //     password: admin.password,
-        //     role: admin.role,
-        //     token: generateToken(admin._id),
-        //     }, 'New admin created successfully'));
+    // if the admin already exists, send an error repsonse (use apiError or apiResponse??)
 
-
-        // send a success response
-        // return res.status(201).json(new ApiResponse(201, admin, "New admin created successfully"));
-
-    } else { // if the admin already exists, send an error repsonse (use apiError or apiResponse??)
+    } else { 
         return res.status(400).json(new ApiError(400, "Cannot create new admin because username or email already exists"));
     }
 });
@@ -163,62 +151,39 @@ const getAdmin = asyncHandler(async (req, res) => {
     } 
 
 })
+    //Login using userName and password (Hashed) while storing the access and refresh token into a cookie
+    const loginAdmin = asyncHandler(async (req, res) =>{
 
-// @desc    Authenticate an admin
-// @route   POST /api/admin/login
-// @access  Private
-// const loginAdmin = asyncHandler(async (req, res) => {
-//   const { userName, password } = req.body
-
-//   // Check for admin userName
-//   const admin = await Admin.findOne({ userName })
-
-//   if (admin && (await bcrypt.compare(password, admin.password))) {
-//     res.json({
-//       _id: admin.id,
-//       userName: admin.userName,
-//       refreh
-//     })
-//   } else {
-//     res.status(400)
-//     throw new Error('Invalid credentials')
-//   }
-// })
-
-// req body -> data
-// userName or password
-//find the admin
-//password check
-//access and referesh token
-//send cookie
-
-const loginAdmin = asyncHandler(async (req, res) =>{
-
-    // check if admin
+    //Check if admin
     if (!req.isAdminRoute) {
         throw new ApiError(403, "You need Admin Privileges");
     }
 
+    // Get the userName and Password
     const {userName, password} = req.body
 
     if (!userName && !password) {
         throw new ApiError(400, "userName password is required")
     }
 
+    //Find the userName and password, while putting them to admin
     const admin = await Admin.findOne({
         $or: [{userName}, {password}]
     })
 
+    //If both userName and password are wrong, then throw Api Error
     if (!admin) {
         throw new ApiError(404, "Admin does not exist")
     }
 
-   const isPasswordValid = await admin.isPasswordCorrect(password)
+    //Password Check
+    const isPasswordValid = await admin.isPasswordCorrect(password)
 
-   if (!isPasswordValid) {
+    if (!isPasswordValid) {
     throw new ApiError(401, "Invalid admin credentials")
     }
 
+    //access and referesh token
    const {accessToken, refreshToken} = await generateAccessAndRefereshTokens(admin._id)
 
     const loggedInAdmin = await Admin.findById(admin._id).select("-password -refreshToken")
@@ -228,6 +193,7 @@ const loginAdmin = asyncHandler(async (req, res) =>{
         secure: true
     }
 
+    //send cookie
     return res
     .status(200)
     .cookie("accessToken", accessToken, options)
@@ -244,18 +210,20 @@ const loginAdmin = asyncHandler(async (req, res) =>{
 
 })
 
+//Logout using _id, where it will also clear the cookie that we stored with access and refresh token
 const logoutAdmin = asyncHandler(async(req, res) => {
 
-    // check if admin
+    //Check if admin
     if (!req.isAdminRoute) {
         throw new ApiError(403, "You need Admin Privileges");
     }
 
+    //Find the mongo _id
     await Admin.findByIdAndUpdate(
         req.admin._id,
         {
             $unset: {
-                refreshToken: 1 // this removes the field from document
+                refreshToken: 1 //This removes the field from document
             }
         },
         {
@@ -268,6 +236,7 @@ const logoutAdmin = asyncHandler(async(req, res) => {
         secure: true
     }
 
+    //Clears the cookie
     return res
     .status(200)
     .clearCookie("accessToken", options)
@@ -275,12 +244,18 @@ const logoutAdmin = asyncHandler(async(req, res) => {
     .json(new ApiResponse(200, {}, "Admin logged Out"))
 })
 
+//It generates and return the access/refresh token for an admin user.
 const generateAccessAndRefereshTokens = async(_id) =>{
     try {
+
+        //Find the mongo _id
         const admin = await Admin.findById(_id)
+
+        //Return the JWTs
         const accessToken = admin.generateAccessToken()
         const refreshToken = admin.generateRefreshToken()
 
+        //Save the new refresh token where it will skips validatation before saving
         admin.refreshToken = refreshToken
         await admin.save({ validateBeforeSave: false })
 
@@ -291,6 +266,9 @@ const generateAccessAndRefereshTokens = async(_id) =>{
         throw new ApiError(500, "Something went wrong while generating referesh and access token")
     }
 }
+
+//It authorize the user if refresh token correct
+//It makes sure if the refresh token is expired or used
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
     const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken

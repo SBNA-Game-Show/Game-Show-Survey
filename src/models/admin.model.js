@@ -15,8 +15,7 @@ const adminSchema = new Schema(
         refreshToken: {
             type: String
         }
-    }
-)
+    },{ collection: 'fixed_admin' });
 
 //check if password was modified, 
 // if yes, it will hash the password using bcrypt with salt round 10, 
@@ -24,11 +23,12 @@ const adminSchema = new Schema(
 //Ensures that passwords are always securely hashed before saving, preventing plain text passwords in the DB
 
 adminSchema.pre("save", async function (next) {
-    if(!this.isModified("password")) return next();
+    if(!this.isModified("password"))  return next();
 
     this.password = await bcrypt.hash(this.password, 10)
     next()
 })
+
 
 //compares the input password vs hashed (already stored) password
 

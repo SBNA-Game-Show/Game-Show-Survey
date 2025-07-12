@@ -1,0 +1,31 @@
+## Project Structure
+
+```
+src/
+  controllers/
+    admin.controller.js
+    answer.controller.j
+    user.controller.js
+    question.controller.js
+    finalQuestion.controller.js
+  db/
+    index.js
+  middlewares/
+    apiKey.js
+    isAdmin.js
+  models/
+    admin.model.js
+    question.model.js
+    finalQuestion.model.js
+    user.model.js
+  routes/
+    admin.route.js
+    survey.route.js
+  utils/
+    ApiError.js
+    ApiResponse.js
+    asyncHandler.js
+  app.js
+  constants.js
+  index.js
+```

@@ -1,8 +1,8 @@
 name: Full Stack Deployment
 
-#on:
-  #push:
-    #branches: 404-Not-Found-Deployment-Testing
+on:
+  push:
+    branches: 404-Not-Found-Deployment-Testing
 
 jobs:
   setup-and-deploy:
@@ -298,6 +298,7 @@ jobs:
           aws cloudfront create-invalidation \
             --distribution-id ${{ env.DISTRIBUTION_ID }} \
             --paths "/*"
+
 
 
 

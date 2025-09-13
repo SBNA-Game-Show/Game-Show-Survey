@@ -1,9 +1,9 @@
 name: Deleting all services
 
-on:
-  push:
-    branches: [404-Not-Found-Deployment-Testing]
-  workflow_dispatch:
+#on:
+  #push:
+    #branches: [404-Not-Found-Deployment-Testing]
+  #workflow_dispatch:
 
 jobs:
   setup-and-deploy:

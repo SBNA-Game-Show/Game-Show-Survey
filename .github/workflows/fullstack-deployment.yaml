@@ -223,7 +223,7 @@ jobs:
 
       - name: Empty S3 bucket before destroy (only if exists)
         run: |
-          BUCKET_NAME="my-sanskrit-survey-frontend-bucket"
+          BUCKET_NAME="my-sanskrit-survey-frontend-bucket-2"
           
           # Check if the bucket exists
           if aws s3api head-bucket --bucket "$BUCKET_NAME" 2>/dev/null; then
@@ -298,6 +298,7 @@ jobs:
           aws cloudfront create-invalidation \
             --distribution-id ${{ env.DISTRIBUTION_ID }} \
             --paths "/*"
+
 
 
 

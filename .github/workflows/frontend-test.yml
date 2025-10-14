@@ -1,10 +1,10 @@
 name: 🔁 Cypress E2E Tests
 
-#on:
-  #push:
-    #branches: Master
-  #pull_request:
-    #branches: main
+on:
+  push:
+    branches: Master
+  pull_request:
+    branches: main
 
 concurrency:
   group: cypress-${{ github.ref }}

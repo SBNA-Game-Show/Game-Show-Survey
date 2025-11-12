@@ -61,7 +61,7 @@ jobs:
       - name: 🧪 Run Cypress tests
         uses: cypress-io/github-action@v6
         with:
-          working-directory: frontend/cypress/e2e/admin
+          working-directory: frontend
           install: false
           config-file: cypress.config.js
           wait-on: "http://localhost:3000"

@@ -4,7 +4,7 @@ on:
   push:
     branches: CleanupCrew
   #pull_request:
-    #branches: main
+  #branches: main
 
 concurrency:
   group: cypress-${{ github.ref }}
@@ -61,8 +61,8 @@ jobs:
       - name: 🧪 Run Cypress tests
         uses: cypress-io/github-action@v6
         with:
-          working-directory: frontend
+          working-directory: frontend/cypress/e2e/admin
           install: false
           config-file: cypress.config.js
-          wait-on: 'http://localhost:3000'
+          wait-on: "http://localhost:3000"
           wait-on-timeout: 120

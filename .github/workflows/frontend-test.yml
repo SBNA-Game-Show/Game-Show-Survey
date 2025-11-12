@@ -1,8 +1,8 @@
 name: 🔁 Cypress E2E Tests
 
-#on:
-  #push:
-    #branches: Master
+on:
+  push:
+    branches: CleanupCrew
   #pull_request:
     #branches: main
 

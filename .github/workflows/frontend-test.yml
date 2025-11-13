@@ -2,9 +2,9 @@ name: 🔁 Cypress E2E Tests
 
 on:
   push:
-    branches: CleanupCrew
-  #pull_request:
-  #branches: main
+    branches: main
+  pull_request:
+    branches: main
 
 concurrency:
   group: cypress-${{ github.ref }}
@@ -54,6 +54,7 @@ jobs:
         working-directory: backend
         env:
           NODE_ENV: development
+          DB_NAME: Data_Jimmy_Test
 
       - name: ⏳ Wait for frontend to be ready
         run: npx wait-on http://localhost:3000 --timeout 120000

@@ -1,6 +1,8 @@
 import React, { useRef, useState, useEffect } from "react";
 import { Volume2, VolumeX, Loader2 } from "lucide-react";
 import { API_BASE, API_KEY } from "../api/config";
+import { Client } from "@gradio/client";
+
 import ProficiencyModal from "../common/ProficiencyModal";
 
 interface UserQuestionCardProps {
@@ -176,25 +178,33 @@ const UserQuestionCard: React.FC<UserQuestionCardProps> = ({
     });
     const formData = new FormData();
     formData.append("audio", file);
+    const HF_SPACE_URL = "https://rverma0631-nemo-asr-model.hf.space/";
 
     try {
-      const res = await fetch(`${API_BASE}/api/v1/audio/transcribe`, {
-        method: "POST",
-        body: formData,
-        headers: { "x-api-key": API_KEY },
+      // 1. Connect to the Gradio Space
+      const client = await Client.connect(HF_SPACE_URL);
+
+      // 2. Call the /predict endpoint with the Blob object
+      // Note: The parameter name 'audio_file' comes directly from the API documentation.
+      const result = await client.predict("/predict", {
+        audio_file: audioBlob,
       });
 
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      // 3. Process the result
+      // The client wraps the output, the actual transcription is in result.data[0]
+      const transcription = (result?.data as any[])?.[0];
 
-      const result = await res.json();
-      if (result.transcription) onAnswerChange(result.transcription);
-      else
-        setRecordingError(
-          "Transcription failed: " + (result.error || "Unknown error")
-        );
-    } catch (err: any) {
-      console.error("Upload failed:", err);
-      setRecordingError("Upload failed: " + err.message);
+      if (transcription) {
+        onAnswerChange(transcription);
+      } else {
+        // Handle cases where the prediction returns an empty or unexpected result
+        setRecordingError("Transcription failed: received empty or invalid output from API.");
+      }
+    } catch (err) {
+      const errorObject = err as Error;
+      console.error("Gradio Client API failed:", err);
+      // The client handles network and API errors, report the message.
+      setRecordingError("Transcription failed: " + errorObject.message);
     } finally {
       setLoading(false);
     }
@@ -531,7 +541,7 @@ const UserQuestionCard: React.FC<UserQuestionCardProps> = ({
               {questions.map((q, i) => (
                 // FIX: no duplicate key/className
                 <div
-                  key={q.questionID || q._id || `question-${i}`}
+                  key={q.questionID || q._id || 'question-${i}'}
                   className="bg-gray-50 rounded-xl p-3 text-sm"
                 >
                   <p className="font-medium text-gray-800 mb-1">

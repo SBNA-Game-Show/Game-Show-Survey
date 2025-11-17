@@ -621,9 +621,9 @@ class TemplateProvider:
             
             <div class="section">
                 <div class="button-group">
-                    <button class="btn btn-warning" onclick="processRanking()">🏆 RANK</button>
+                    <button class="btn btn-warning" data-cy="btn-rank" onclick="processRanking()">🏆 RANK</button>
                     <div class="button-separator"></div>
-                    <button class="btn btn-final" onclick="postFinalAnswers()">📤 POST</button>
+                    <button class="btn btn-final" data-cy="btn-post" onclick="postFinalAnswers()">📤 POST</button>
                 </div>
                 <div style="margin-top: 16px; padding: 12px; background: #f7fafc; border-radius: 6px; font-size: 13px; color: #4a5568;">
                     <strong>🏆 RANK:</strong> Process questions with 3+ answers to rank and score<br>
@@ -641,7 +641,7 @@ class TemplateProvider:
             
             <div class="section">
                 <div id="status-container">
-                    <div class="status info">Ready to start</div>
+                    <div class="status info" data-cy="status-text">Ready to start</div>
                 </div>
                 <div class="progress">
                     <div class="progress-bar" id="progress-bar"></div>
@@ -659,15 +659,15 @@ class TemplateProvider:
             <div class="section">
                 <div class="stats-grid" id="stats-grid">
                     <div class="stat-card">
-                        <div class="stat-number" id="total-answered">-</div>
+                        <div class="stat-number" id="total-answered" data-cy="stat-total-answered">-</div>
                         <div class="stat-label">Total Answered</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-number" id="processed-questions">-</div>
+                        <div class="stat-number" id="processed-questions" data-cy="stat-processed">-</div>
                         <div class="stat-label">Processed</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-number" id="ranked-answers">-</div>
+                        <div class="stat-number" id="ranked-answers" data-cy="stat-answers-ranked">-</div>
                         <div class="stat-label">Answers Ranked</div>
                     </div>
                    
@@ -685,8 +685,8 @@ class TemplateProvider:
             </div>
             
             <div class="section">
-                <button class="btn btn-success" onclick="previewRanking()">🔍 Preview Ranking</button>
-                <div id="preview-results" style="margin-top: 16px; font-size: 13px; color: #4a5568;"></div>
+                <button class="btn btn-success" data-cy="btn-preview" onclick="previewRanking()">🔍 Preview Ranking</button>
+                <div id="preview-results" data-cy="preview-list" style="margin-top: 16px; font-size: 13px; color: #4a5568;"></div>
             </div>
 
         </div>
@@ -759,7 +759,7 @@ class TemplateProvider:
                 : '';
 
             return `
-                <div style="padding:12px; border:1px solid #e5e7eb; border-radius:8px; margin-bottom:12px;">
+                <div data-cy="preview-card" style="padding:12px; border:1px solid #e5e7eb; border-radius:8px; margin-bottom:12px;">
                 ${header}
                 ${status}
                 ${clusters ? `<ul style="margin-left:16px;">${clusters}</ul>` : '<div style="opacity:.7;">No clusters</div>'}
@@ -782,7 +782,7 @@ class TemplateProvider:
             </div>
             
             <div class="section">
-                <div class="logs" id="logs">
+                <div class="logs" id="logs" data-cy="log-panel">
 [INFO] Debug UI initialized - Input questions only
 [INFO] Waiting for user action...
                 </div>
@@ -800,7 +800,7 @@ class TemplateProvider:
 
         function updateStatus(message, type = 'info') {
             const container = document.getElementById('status-container');
-            container.innerHTML = `<div class="status ${type}">${message}</div>`;
+            container.innerHTML = `<div class="status ${type}" data-cy="status-text">${message}</div>`;
         }
 
         function updateProgress(percent) {

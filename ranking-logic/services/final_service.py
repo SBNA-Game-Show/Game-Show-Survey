@@ -155,8 +155,8 @@ class QuestionValidator:
         # Check for at least 3 correct answers
         correct_answers = [a for a in answers if a.get(AnswerFields.IS_CORRECT, False)]
         
-        if len(correct_answers) < 3:
-            return False, f"Input question needs at least 3 correct answers, found {len(correct_answers)}"
+        if len(correct_answers) < 1:
+            return False, f"Input question needs at least 1 correct answer, found {len(correct_answers)}"
         
         return True, "Valid Input question"
 

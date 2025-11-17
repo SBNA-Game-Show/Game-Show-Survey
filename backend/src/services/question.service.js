@@ -145,20 +145,20 @@ async function addQuestions(questions, collection) {
         // For INPUT type questions, keep only correct answers
         let filteredAnswers = [];
         if (questionType === QUESTION_TYPE.INPUT) {
-          if (answers.length < 3) {
+          if (answers.length < 1) {
             throw new ApiError(
               400,
-              "Input Questions must have atleast 3 valid answers"
+              "Input Questions must have atleast 1 valid answer"
             );
           }
           filteredAnswers = answers.filter((a) => {
             return a.isCorrect === true;
           });
         }
-        if (filteredAnswers.length <  3) {
+        if (filteredAnswers.length <  1) {
           throw new ApiError(
             400,
-            "There should be exactly 3 Correct Answers for Input Type Questions"
+            "There should be exactly 1 Correct Answer for Input Type Questions"
           );
         }
         // For MCQ type, keep all provided answers
@@ -277,7 +277,7 @@ async function updateQuestionById(questionsData, collection) {
       // INPUT questions must have exactly one correct answer
       if (questionType === QUESTION_TYPE.INPUT) {
         const correctAnswers = answers.filter((a) => a.isCorrect === true);
-        if (correctAnswers.length < 3) {
+        if (correctAnswers.length < 1) {
           throw new ApiError(400, "Must have 3 answers set to Correct");
         }
       }

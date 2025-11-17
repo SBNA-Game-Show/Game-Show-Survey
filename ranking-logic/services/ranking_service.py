@@ -8,6 +8,7 @@ from typing import List, Dict, Tuple
 from config.settings import Config
 from constants import AnswerFields, QuestionFields
 from utils.data_formatters import QuestionFormatter, DataValidator
+from services.similarity_service import SimilarityService
 
 logger = logging.getLogger('survey_analytics')
 
@@ -179,56 +180,76 @@ class AnswerRanker:
 
 
 class QuestionProcessor:
-    def __init__(self, answer_ranker: AnswerRanker):
+    def __init__(self, answer_ranker: AnswerRanker, similarity: "SimilarityService"):
         self.answer_ranker = answer_ranker
+        self.similarity = similarity
 
     def _should_process(self, q: Dict) -> Tuple[bool, Dict]:
         reason = {"skipped_mcq": False, "skipped_insufficient": False}
+
+        # Only rank "input" type
         if str(q.get(QuestionFields.QUESTION_TYPE, "")).lower() != "input":
             reason["skipped_mcq"] = True
             return False, reason
+
         answers = q.get(QuestionFields.ANSWERS) or []
-        ##total = _total_responses(answers)
-        ##if total < MIN_RESPONSES:
-            ##reason["skipped_insufficient"] = True
-            ##return False, reason
-        ##return True, reason
+
+        # Require at least MIN_RESPONSES total correct responses (after merge)
         total_correct = sum(
             _to_int(a.get(AnswerFields.RESPONSE_COUNT, 0))
             for a in answers
-            if _to_bool(a.get(AnswerFields.IS_CORRECT))
-            )
+            if _is_true(a.get(AnswerFields.IS_CORRECT))
+        )
         if total_correct < MIN_RESPONSES:
             reason["skipped_insufficient"] = True
             return False, reason
+
         return True, reason
 
     def process_question(self, q: Dict) -> Tuple[Dict, Dict]:
         qid = QuestionFormatter.get_question_id(q)
         answers = q.get(QuestionFields.ANSWERS) or []
         logger.debug("Processing ranking for Input question %s with %d answers", qid, len(answers))
+
+        # 1) Merge near-duplicates first (so thresholds & ranking use merged counts)
+        merged, _ = self.similarity.merge_similar_answers(answers)
+        q[QuestionFields.ANSWERS] = merged
+        answers = merged
+
         for i, a in enumerate(answers):
             logger.debug("Answer %d: '%s' - isCorrect: %s, responseCount: %s",
                          i, str(a.get(AnswerFields.ANSWER))[:30],
                          a.get(AnswerFields.IS_CORRECT),
                          a.get(AnswerFields.RESPONSE_COUNT))
 
+        # 2) Decide if we should process (uses merged counts)
         ok, reason = self._should_process(q)
         if not ok:
             return q, {"processed": False, **reason}
 
+        # 3) Rank the merged answers
         ranked_answers, ranked_cnt, scored_cnt = self.answer_ranker.rank_answers(answers)
         q[QuestionFields.ANSWERS] = ranked_answers
+
         logger.debug("Input question %s: ranked %d answers, scored %d answers", qid, ranked_cnt, scored_cnt)
         return q, {"processed": True, "ranked_cnt": ranked_cnt, "scored_cnt": scored_cnt}
+
+    # Safety alias for any old code path
+    def process(self, q: Dict) -> Tuple[Dict, Dict]:
+        return self.process_question(q)
+
 
 class RankingService:
     """Main service for handling answer ranking operations - Input questions only"""
     
     def __init__(self, db_handler):
+        ##self.db = db_handler
+        ##self.answer_ranker = AnswerRanker(Config.SCORING_VALUES)
+        ##self.question_processor = QuestionProcessor(self.answer_ranker)
         self.db = db_handler
         self.answer_ranker = AnswerRanker(Config.SCORING_VALUES)
-        self.question_processor = QuestionProcessor(self.answer_ranker)
+        self.similarity = SimilarityService(self.db)
+        self.question_processor = QuestionProcessor(self.answer_ranker, self.similarity)
     
     def preview_details(self, questions: List[Dict], top_n: int = 5) -> List[Dict]:
         """

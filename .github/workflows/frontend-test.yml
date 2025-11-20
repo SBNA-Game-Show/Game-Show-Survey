@@ -2,9 +2,12 @@ name: 🔁 Cypress E2E Tests
 
 on:
   push:
-    branches: main
+    branches: [ main ]
   pull_request:
-    branches: main
+    branches: [ main ]
+
+permissions:
+  contents: write   # allow pushing to other branches
 
 concurrency:
   group: cypress-${{ github.ref }}
@@ -68,3 +71,38 @@ jobs:
           config-file: cypress.config.js
           wait-on: "http://localhost:3000"
           wait-on-timeout: 120
+
+  sync-release-branch:
+    name: Sync release-branch with main & deploy to Render
+    needs: cypress-run
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🧾 Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: 🔄 Force mirror main → release-branch
+        run: |
+          git fetch origin main
+          git checkout main
+          git reset --hard origin/main
+          # Force push so release-branch ALWAYS == main
+          git push origin main:release-branch --force
+
+      - name: 🚀 Trigger Render deploy for Survey
+        run: curl -X POST "$SURVEY_RENDER_DEPLOY_HOOK_URL"
+        env:
+          SURVEY_RENDER_DEPLOY_HOOK_URL: ${{ secrets.SURVEY_RENDER_DEPLOY_HOOK_URL }}
+
+      - name: 🚀 Trigger Render deploy for Ranking
+        run: curl -X POST "$RANKING_RENDER_DEPLOY_HOOK_URL"
+        env:
+          RANKING_RENDER_DEPLOY_HOOK_URL: ${{ secrets.RANKING_RENDER_DEPLOY_HOOK_URL }}

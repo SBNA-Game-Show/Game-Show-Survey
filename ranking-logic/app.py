@@ -1,19 +1,25 @@
 """
 Updated Flask Application - Two separate buttons for ranking and final POST
 """
-
 import time
 import traceback
 from flask import Flask, render_template_string, jsonify, request
+from flask_cors import CORS
 from config.settings import Config
 from database.db_handler import DatabaseHandler
 from services.ranking_service import RankingService
 from services.final_service import FinalService
 from utils.logger import setup_logger
 from constants import LogMessages
-
+from flask_cors import CORS, cross_origin
 # Initialize Flask app
 app = Flask(__name__)
+
+# Or allow all origins for testing
+CORS(app)  # This should allow all origins by default
+
+# # Initialize Flask app
+# app = Flask(__name__)
 
 # Setup logging
 logger = setup_logger()
@@ -615,9 +621,9 @@ class TemplateProvider:
             
             <div class="section">
                 <div class="button-group">
-                    <button class="btn btn-warning" onclick="processRanking()">🏆 RANK</button>
+                    <button class="btn btn-warning" data-cy="btn-rank" onclick="processRanking()">🏆 RANK</button>
                     <div class="button-separator"></div>
-                    <button class="btn btn-final" onclick="postFinalAnswers()">📤 POST</button>
+                    <button class="btn btn-final" data-cy="btn-post" onclick="postFinalAnswers()">📤 POST</button>
                 </div>
                 <div style="margin-top: 16px; padding: 12px; background: #f7fafc; border-radius: 6px; font-size: 13px; color: #4a5568;">
                     <strong>🏆 RANK:</strong> Process questions with 3+ answers to rank and score<br>
@@ -635,7 +641,7 @@ class TemplateProvider:
             
             <div class="section">
                 <div id="status-container">
-                    <div class="status info">Ready to start</div>
+                    <div class="status info" data-cy="status-text">Ready to start</div>
                 </div>
                 <div class="progress">
                     <div class="progress-bar" id="progress-bar"></div>
@@ -653,15 +659,15 @@ class TemplateProvider:
             <div class="section">
                 <div class="stats-grid" id="stats-grid">
                     <div class="stat-card">
-                        <div class="stat-number" id="total-answered">-</div>
+                        <div class="stat-number" id="total-answered" data-cy="stat-total-answered">-</div>
                         <div class="stat-label">Total Answered</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-number" id="processed-questions">-</div>
+                        <div class="stat-number" id="processed-questions" data-cy="stat-processed">-</div>
                         <div class="stat-label">Processed</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-number" id="ranked-answers">-</div>
+                        <div class="stat-number" id="ranked-answers" data-cy="stat-answers-ranked">-</div>
                         <div class="stat-label">Answers Ranked</div>
                     </div>
                    
@@ -679,8 +685,8 @@ class TemplateProvider:
             </div>
             
             <div class="section">
-                <button class="btn btn-success" onclick="previewRanking()">🔍 Preview Ranking</button>
-                <div id="preview-results" style="margin-top: 16px; font-size: 13px; color: #4a5568;"></div>
+                <button class="btn btn-success" data-cy="btn-preview" onclick="previewRanking()">🔍 Preview Ranking</button>
+                <div id="preview-results" data-cy="preview-list" style="margin-top: 16px; font-size: 13px; color: #4a5568;"></div>
             </div>
 
         </div>
@@ -753,7 +759,7 @@ class TemplateProvider:
                 : '';
 
             return `
-                <div style="padding:12px; border:1px solid #e5e7eb; border-radius:8px; margin-bottom:12px;">
+                <div data-cy="preview-card" style="padding:12px; border:1px solid #e5e7eb; border-radius:8px; margin-bottom:12px;">
                 ${header}
                 ${status}
                 ${clusters ? `<ul style="margin-left:16px;">${clusters}</ul>` : '<div style="opacity:.7;">No clusters</div>'}
@@ -766,13 +772,8 @@ class TemplateProvider:
             el.innerHTML = `❌ Error: ${err.message}`;
         }
         }
-        </script>
-
-
-
-        
-
-
+            window.previewRanking = previewRanking;
+        </script>      
         <!-- Logs Panel -->
         <div class="panel full-width-panel">
             <div class="panel-header">
@@ -781,7 +782,7 @@ class TemplateProvider:
             </div>
             
             <div class="section">
-                <div class="logs" id="logs">
+                <div class="logs" id="logs" data-cy="log-panel">
 [INFO] Debug UI initialized - Input questions only
 [INFO] Waiting for user action...
                 </div>
@@ -799,7 +800,7 @@ class TemplateProvider:
 
         function updateStatus(message, type = 'info') {
             const container = document.getElementById('status-container');
-            container.innerHTML = `<div class="status ${type}">${message}</div>`;
+            container.innerHTML = `<div class="status ${type}" data-cy="status-text">${message}</div>`;
         }
 
         function updateProgress(percent) {
@@ -933,11 +934,6 @@ def health():
     status_code = 500 if result["status"] == "error" else 200
     return jsonify(result), status_code
 
-##@app.route('/api/health')
-##def health():
-    # Fast, deterministic, no external calls
-    ##return jsonify(status="ok"), 200
-
 @app.route('/api/test-connection')
 def test_connection():
     """Test API connection"""
@@ -978,24 +974,123 @@ def get_logs():
     })
 
 ######################################### Addition for Preview Ranking
+
 @app.route('/api/preview-ranking')
+@cross_origin()
 def preview_ranking():
+    """Preview ranking details with comprehensive error handling"""
     try:
+        logger.info("🔍 Starting preview ranking endpoint...")
+        
+        # Test if services are properly initialized
+        if not db_handler or not ranking_service:
+            logger.error("❌ Services not initialized properly")
+            return jsonify({
+                "status": "error", 
+                "message": "Services not initialized"
+            }), 500
+        
+        # Test database connection
+        try:
+            logger.info("🔌 Testing database connection...")
+            connection_ok = db_handler.test_connection()
+            if not connection_ok:
+                logger.error("❌ Database connection test failed")
+                return jsonify({
+                    "status": "error", 
+                    "message": "Database connection failed"
+                }), 500
+            logger.info("✅ Database connection OK")
+        except Exception as conn_error:
+            logger.error(f"❌ Database connection error: {conn_error}")
+            return jsonify({
+                "status": "error", 
+                "message": f"Database connection error: {str(conn_error)}"
+            }), 500
+        
         # Fetch questions
-        questions = db_handler.fetch_all_questions()
-        details = ranking_service.preview_details(questions, top_n=5)
-
-        return jsonify({
-            "status": "success",
-            "data": details
-        })
+        try:
+            logger.info("📥 Fetching questions...")
+            questions = db_handler.fetch_all_questions()
+            logger.info(f"📊 Fetched {len(questions)} questions")
+            
+            if not questions:
+                logger.info("📭 No questions found")
+                return jsonify({
+                    "status": "success",
+                    "data": [],
+                    "message": "No questions found in database"
+                })
+                
+        except Exception as fetch_error:
+            logger.error(f"❌ Error fetching questions: {fetch_error}")
+            return jsonify({
+                "status": "error", 
+                "message": f"Failed to fetch questions: {str(fetch_error)}"
+            }), 500
+        
+        # Generate preview details
+        try:
+            logger.info("🎯 Generating preview details...")
+            
+            # Check if preview_details method exists
+            if not hasattr(ranking_service, 'preview_details'):
+                logger.error("❌ preview_details method not found in ranking_service")
+                # Fallback: create simple preview
+                fallback_data = []
+                for i, q in enumerate(questions[:5]):  # Limit to 5 for testing
+                    fallback_data.append({
+                        "text": q.get('question', f'Question {i}'),
+                        "questionType": q.get('questionType', 'unknown'),
+                        "rankable": False,
+                        "skipReason": "preview method missing",
+                        "clusters": []
+                    })
+                
+                return jsonify({
+                    "status": "success",
+                    "data": fallback_data,
+                    "message": "Using fallback preview (main method not available)"
+                })
+            
+            details = ranking_service.preview_details(questions, top_n=5)
+            logger.info(f"✅ Generated preview for {len(details)} questions")
+            
+            return jsonify({
+                "status": "success",
+                "data": details,
+                "count": len(details)
+            })
+            
+        except Exception as preview_error:
+            logger.error(f"❌ Error in preview_details: {preview_error}")
+            logger.error(f"🔍 Traceback: {traceback.format_exc()}")
+            
+            # Fallback: return basic question info
+            fallback_data = []
+            for i, q in enumerate(questions[:3]):  # Limit to 3 for error case
+                fallback_data.append({
+                    "text": q.get('question', f'Question {i}'),
+                    "questionType": q.get('questionType', 'unknown'),
+                    "rankable": False,
+                    "skipReason": f"Error: {str(preview_error)}",
+                    "clusters": []
+                })
+            
+            return jsonify({
+                "status": "success",
+                "data": fallback_data,
+                "message": "Preview generated with fallback due to error"
+            })
+        
     except Exception as e:
-        logger.error(f"Error in preview_ranking: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
-
-
-##################################################################
-
+        logger.error(f"💥 Critical error in preview_ranking: {e}")
+        logger.error(f"🔍 Full traceback: {traceback.format_exc()}")
+        
+        return jsonify({
+            "status": "error", 
+            "message": f"Server error: {str(e)}"
+        }), 500
 
 if __name__ == '__main__':
     logger.info("🌐 Starting Debug UI Server")

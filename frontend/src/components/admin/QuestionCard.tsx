@@ -11,7 +11,7 @@ const categories = [
   "History",
 ] as const;
 const levels = ["Beginner", "Intermediate", "Advanced"] as const;
-const questionTypes = ["Input", "Mcq"] as const;
+const questionTypes = ["Input", "MCQ"] as const;
 
 interface QuestionCardProps {
   question: Question;
@@ -206,7 +206,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
         {/* Question Text + MCQ Right Side */}
         <div
           className={`flex flex-col ${
-            question.questionType === "Mcq" ? "sm:flex-row gap-4" : ""
+            question.questionType === "MCQ" ? "sm:flex-row gap-4" : ""
           }`}
         >
           {/* Left: Question Text */}
@@ -217,7 +217,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
             <div className="relative">
               <textarea
                 data-cy="question-textarea"
-                rows={question.questionType === "Mcq" ? 6 : 4}
+                rows={question.questionType === "MCQ" ? 6 : 4}
                 value={question.question || ""}
                 onChange={(e) => onUpdate("question", e.target.value)}
                 placeholder={
@@ -246,7 +246,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
           </div>
 
           {/* Right: MCQ Options */}
-          {question.questionType === "Mcq" && (
+          {question.questionType === "MCQ" && (
             <div className="flex-1 space-y-2 mt-6 sm:mt-0">
               <div className="text-sm font-semibold text-gray-900 mb-1">
                 MCQ Options <span className="text-red-500">*</span>

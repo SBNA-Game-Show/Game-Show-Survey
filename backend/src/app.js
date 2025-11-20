@@ -7,14 +7,14 @@ const app = express();
 app.use(cors());
 
 
-// Parse incoming JSON requests (up to 20kb)
-app.use(express.json({ limit: "20kb" }));
+// Parse incoming JSON requests (up to 1mb)
+app.use(express.json({ limit: "1mb" }));
 
 /*
-Parse URL-encoded form data (also up to 20kb)
+Parse URL-encoded form data (also up to 1mb)
 'extended: true' allows nested objects
 */
-app.use(express.urlencoded({ extended: true, limit: "20kb" }));
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
 // Serve static files from the 'public' directory
 app.use(express.static("public"));

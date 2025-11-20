@@ -16,7 +16,7 @@ from constants import LogMessages
 app = Flask(__name__)
 
 # Or allow all origins for testing
-CORS(app)  # This should allow all origins by default
+#CORS(app)  # This should allow all origins by default
 
 # # Initialize Flask app
 # app = Flask(__name__)

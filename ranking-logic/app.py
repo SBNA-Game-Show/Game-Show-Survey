@@ -976,7 +976,7 @@ def get_logs():
 ######################################### Addition for Preview Ranking
 
 @app.route('/api/preview-ranking')
-@cross_origin()
+#@cross_origin()
 def preview_ranking():
     """Preview ranking details with comprehensive error handling"""
     try:

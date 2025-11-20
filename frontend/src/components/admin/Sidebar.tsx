@@ -41,7 +41,7 @@ const getClassNames = {
 
   questionTypeBadge: (type?: string) =>
     `text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${
-      type === "Mcq"
+      type === "MCQ"
         ? "bg-blue-100 text-blue-700"
         : "bg-green-100 text-green-700"
     }`,

@@ -347,7 +347,7 @@ const QuestionDetailPage: React.FC = () => {
               <div>
                 <span className="text-gray-500">Type:</span>
                 <p className="font-semibold">
-                  {question.questionType === "Mcq"
+                  {question.questionType === "MCQ"
                     ? "Multiple Choice"
                     : "Text Input"}
                 </p>

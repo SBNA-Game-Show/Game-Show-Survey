@@ -110,7 +110,7 @@ export async function updateSingleQuestion(question: Question): Promise<void> {
   };
 
   // Only include answers array for MCQ questions
-  if (question.questionType === "Mcq" && question.answers && question.answers.length > 0) {
+  if (question.questionType === "MCQ" && question.answers && question.answers.length > 0) {
     questionData.answers = question.answers.map((a) => ({
       answer: a.answer,
       isCorrect: a.isCorrect,
@@ -128,7 +128,7 @@ export async function updateSingleQuestion(question: Question): Promise<void> {
     questionID: question.questionID,
     question: question.question.substring(0, 30) + "...",
     type: question.questionType,
-    hasAnswers: question.questionType === "Mcq" ? question.answers?.length || 0 : "N/A (Input type)",
+    hasAnswers: question.questionType === "MCQ" ? question.answers?.length || 0 : "N/A (Input type)",
   });
 
   const res = await fetch(`${API_BASE}/api/v1/admin/survey`, {
@@ -221,7 +221,7 @@ export async function updateSurveyQuestionsBatch(
       };
 
       // Only include answers array for MCQ questions
-      if (q.questionType === "Mcq" && q.answers && q.answers.length > 0) {
+      if (q.questionType === "MCQ" && q.answers && q.answers.length > 0) {
         questionData.answers = q.answers.map((a) => ({
           answer: a.answer,
           isCorrect: a.isCorrect,
@@ -242,7 +242,7 @@ export async function updateSurveyQuestionsBatch(
       question: q.question.substring(0, 20) + "...",
       type: q.questionType,
       hasAnswers:
-        q.questionType === "Mcq" ? q.answers?.length || 0 : "N/A (Input type)",
+        q.questionType === "MCQ" ? q.answers?.length || 0 : "N/A (Input type)",
     }))
   );
 
@@ -276,7 +276,7 @@ export async function postSurveyQuestions(
         answers: [],
       };
 
-      if (q.questionType === "Mcq" && q.answers && q.answers.length > 0) {
+      if (q.questionType === "MCQ" && q.answers && q.answers.length > 0) {
         questionData.answers = q.answers.map((a) => ({
           answer: a.answer,
           isCorrect: a.isCorrect || false,

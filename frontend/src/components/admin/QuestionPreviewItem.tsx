@@ -25,12 +25,12 @@ export const QuestionPreviewItem: React.FC<QuestionPreviewItemProps> = ({
           </span>
           <span
             className={`px-2 py-1 rounded-full text-xs font-medium ${
-              q.questionType === "Mcq"
+              q.questionType === "MCQ"
                 ? "bg-purple-100 text-purple-700"
                 : "bg-gray-100 text-gray-700"
             }`}
           >
-            {q.questionType === "Mcq" ? "Multiple Choice" : "Text Input"}
+            {q.questionType === "MCQ" ? "Multiple Choice" : "Text Input"}
           </span>
         </div>
         <div className="flex items-center gap-1">
@@ -50,7 +50,7 @@ export const QuestionPreviewItem: React.FC<QuestionPreviewItemProps> = ({
         {q.question}
       </h4>
 
-      {q.questionType === "Mcq" && q.answers && q.answers.length > 0 && (
+      {q.questionType === "MCQ" && q.answers && q.answers.length > 0 && (
         <div className="mt-3 pl-4 border-l-2 border-gray-200">
           <p className="text-sm font-medium text-gray-700 mb-2">
             Answer Options:

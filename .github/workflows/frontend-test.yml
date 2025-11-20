@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 permissions:
-  contents: write   # ✅ allow pushing to other branches
+  contents: write   # allow pushing to other branches
 
 concurrency:
   group: cypress-${{ github.ref }}
@@ -73,7 +73,7 @@ jobs:
           wait-on-timeout: 120
 
   sync-release-branch:
-    name: Sync release-branch with main
+    name: Sync release-branch with main & deploy to Render
     needs: cypress-run
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -91,10 +91,18 @@ jobs:
 
       - name: 🔄 Force mirror main → release-branch
         run: |
-          # Make sure we are exactly at origin/main
           git fetch origin main
           git checkout main
           git reset --hard origin/main
-
           # Force push so release-branch ALWAYS == main
           git push origin main:release-branch --force
+
+      - name: 🚀 Trigger Render deploy for Survey
+        run: curl -X POST "$SURVEY_RENDER_DEPLOY_HOOK_URL"
+        env:
+          SURVEY_RENDER_DEPLOY_HOOK_URL: ${{ secrets.SURVEY_RENDER_DEPLOY_HOOK_URL }}
+
+      - name: 🚀 Trigger Render deploy for Ranking
+        run: curl -X POST "$RANKING_RENDER_DEPLOY_HOOK_URL"
+        env:
+          RANKING_RENDER_DEPLOY_HOOK_URL: ${{ secrets.RANKING_RENDER_DEPLOY_HOOK_URL }}

@@ -69,6 +69,9 @@ describe("Login as admin and create a question", () => {
       });
       cy.get('[data-cy="save-questions-button"]').click();
       cy.get('[data-cy="save-confirm-button"]').click();
+
+      cy.wait(5000);
+
     });
   });
 
@@ -98,6 +101,9 @@ describe("Login as admin and create a question", () => {
       });
       cy.get('[data-cy="save-questions-button"]').click();
       cy.get('[data-cy="save-confirm-button"]').click();
+
+      cy.wait(5000);
+
     });
   });
 });

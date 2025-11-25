@@ -14,6 +14,7 @@ describe("Login as admin and delete questions", () => {
         .click();
       cy.get('[data-cy="delete-all-questions-button"]').should("exist").click();
       cy.get('[data-cy="confirm-delete-all-button"]').should("exist").click();
+      cy.wait(5000);
     });
   });
 });

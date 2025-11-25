@@ -54,6 +54,7 @@ describe("Admin login page test with no 'get' on TailwindCSS", () => {
     cy.url().should("eq", "http://localhost:3000/dashboard");
     cy.get('[data-cy="logout-button"]').should("exist").click();
     cy.get('[data-cy="confirm-logout-button"]').should("exist").click();
+    cy.wait(2000);
     cy.url().should("eq", "http://localhost:3000/login");
   });
 });

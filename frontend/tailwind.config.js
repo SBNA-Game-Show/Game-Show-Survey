@@ -156,6 +156,7 @@ module.exports = {
         "analytics-bg": "var(--analytics-bg)",
         "button-refresh-responses-back": "var(--button-refresh-responses-back)",
         "responses-bg": "var(--responses-bg)",
+        "question-details": "var(--questiondetails-bg)",
 
 
         /* Admin lost connection */

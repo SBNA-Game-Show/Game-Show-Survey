@@ -1,11 +1,8 @@
-
-
 describe("Participant Login and advance Level Testing", () => {
   beforeEach(() => {
     cy.viewport("macbook-15");
     cy.visit("http://localhost:3000/login");
   });
-    
 
   it("Should verify advance game elements load properly", () => {
     cy.get('[data-cy="username-input"]').type("advance Player");
@@ -14,42 +11,40 @@ describe("Participant Login and advance Level Testing", () => {
     cy.get('[data-cy="advanced-button"]').click();
     cy.get('[data-cy="confirm-button"]').click();
 
-    const totalQuestions = 8;
+    let answeredCount = 0;
 
-    for (let i = 0; i < totalQuestions; i++) {
-      cy.log(`Question ${i + 1}`);
+    function handleQuestion() {
+      cy.get("body").then(($body) => {
+        if ($body.find('[data-cy="submit-survey"]').length > 0) {
+          cy.get('[data-cy="submit-survey"]').click();
+          return;
+        }
 
+        cy.log(`Handling advanced question #${answeredCount + 1}`);
 
-if (i < 4) {
+        if (answeredCount < 4) {
+          cy.get('[data-cy="text-area"]')
+            .clear()
+            .type(`Example ${answeredCount + 1}`);
 
-        cy.get('[data-cy="text-area"]')
-          .clear()
-          .type(`Example ${i + 1}`);
+          cy.wait(300);
 
-        cy.wait(300); 
-
-        // Check which button is available 
-        cy.get("body").then(($body) => {
           if ($body.find('[data-cy="save-continue-button"]').length > 0) {
             cy.get('[data-cy="save-continue-button"]').click();
-
           } else if ($body.find('[data-cy="review-answers-button"]').length > 0) {
-             cy.get('[data-cy="review-answers-button"]').click();
-
-          } 
-          else {
-            cy.log("No save and review button found");
+            cy.get('[data-cy="review-answers-button"]').click();
           }
-        });
-      } else {
 
-        cy.get('[data-cy="skip-button"]', { timeout: 1000 }).click();
+          answeredCount++;
+        } else {
+          cy.get('[data-cy="skip-button"]').click();
+        }
 
-      }
-     cy.wait(500);
+        cy.wait(400);
+        handleQuestion();
+      });
     }
 
-        cy.get('[data-cy="submit-survey"]').click();
-
+    handleQuestion();
   });
 });

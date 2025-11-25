@@ -1,5 +1,4 @@
 // src/components/admin/Sidebar.tsx
-import React from "react";
 import { Trash2, Plus } from "lucide-react";
 
 const LEVELS = ["Beginner", "Intermediate", "Advanced"] as const;
@@ -21,9 +20,38 @@ interface SidebarProps {
   onDeleteAll(level: Level): void;
   onSelectLevel(level: Level): void;
   completedCount: number;
-  mode?: "create" | "edit"; // Add mode prop
-  onAddQuestion?: (level: Level) => void; // Add onAddQuestion prop
+  mode?: "create" | "edit";
+  onAddQuestion?: (level: Level) => void;
 }
+
+const getClassNames = {
+  levelTab: (isActive: boolean) =>
+    `px-4 py-2 rounded-t-lg transition-colors focus:outline-none ${
+      isActive
+        ? "bg-active-level-tab-bg text-active-level-tab-text border-t border-l border-r border-gray-200"
+        : "bg-inactive-level-tab-bg text-inactive-level-tab-text hover:bg-gray-200"
+    }`,
+
+  questionItem: (isActive: boolean) =>
+    `group flex items-start gap-2 p-2.5 rounded-lg cursor-pointer transition-all duration-200 mb-1 ${
+      isActive
+        ? "bg-levelquestion-active-bg border-l-4 border-levelquestion-active-border shadow-sm"
+        : "hover:bg-gray-50 hover:shadow-sm border-l-4 border-transparent"
+    }`,
+
+  questionTypeBadge: (type?: string) =>
+    `text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${
+      type === "Mcq"
+        ? "bg-blue-100 text-blue-700"
+        : "bg-green-100 text-green-700"
+    }`,
+
+  deleteButton:
+    "flex items-center gap-1 px-3 py-1 bg-btn-delete-all-questions-bg text-btn-delete-all-questions-text rounded-md hover:bg-btn-delete-all-questions-hover-bg transition-colors text-sm",
+
+  addButton:
+    "w-full px-3 py-2 rounded-lg font-medium text-gray-600 bg-gray-50 border border-gray-200 hover:bg-gray-100 hover:text-gray-700 hover:border-gray-300 transition-all duration-150 flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gray-50 disabled:hover:text-gray-600 disabled:hover:border-gray-200",
+};
 
 export function Sidebar({
   questionsByLevel,
@@ -41,7 +69,7 @@ export function Sidebar({
   const progressPct = totalQuestions
     ? (completedCount / totalQuestions) * 100
     : 0;
-  const MAX_HEIGHT_REM = mode === "create" ? 20 : 22; // Slightly less height in create mode to make room for add button
+  const MAX_HEIGHT_REM = mode === "create" ? 20 : 22;
 
   return (
     <aside
@@ -90,11 +118,7 @@ export function Sidebar({
               data-cy={`level-tab-${lvl.toLowerCase()}`}
               key={lvl}
               onClick={() => onSelectLevel(lvl)}
-              className={`px-4 py-2 rounded-t-lg transition-colors focus:outline-none ${
-                currentLevel === lvl
-                  ? "bg-active-level-tab-bg text-active-level-tab-text border-t border-l border-r border-gray-200"
-                  : "bg-inactive-level-tab-bg text-inactive-level-tab-text hover:bg-gray-200"
-              }`}
+              className={getClassNames.levelTab(currentLevel === lvl)}
             >
               {lvl}
             </button>
@@ -107,7 +131,7 @@ export function Sidebar({
               onDeleteAll(currentLevel);
             }
           }}
-          className="flex items-center gap-1 px-3 py-1 bg-btn-delete-all-questions-bg text-btn-delete-all-questions-text rounded-md hover:bg-btn-delete-all-questions-hover-bg transition-colors text-sm"
+          className={getClassNames.deleteButton}
           title={`Delete all ${currentLevel} questions`}
           type="button"
         >
@@ -132,11 +156,7 @@ export function Sidebar({
               <div
                 data-cy={`${currentLevel}-question-${idx}`}
                 key={q.id || idx}
-                className={`group flex items-start gap-2 p-2.5 rounded-lg cursor-pointer transition-all duration-200 mb-1 ${
-                  idx === currentIndex
-                    ? "bg-levelquestion-active-bg border-l-4 border-levelquestion-active-border shadow-sm"
-                    : "hover:bg-gray-50 hover:shadow-sm border-l-4 border-transparent"
-                }`}
+                className={getClassNames.questionItem(idx === currentIndex)}
                 onClick={() => onSelect(currentLevel, idx)}
                 tabIndex={0}
                 title={q.question || "Untitled Question"}
@@ -150,11 +170,7 @@ export function Sidebar({
                     {q.question || "Untitled Question"}
                   </span>
                   <span
-                    className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${
-                      q.questionType === "Mcq"
-                        ? "bg-blue-100 text-blue-700"
-                        : "bg-green-100 text-green-700"
-                    }`}
+                    className={getClassNames.questionTypeBadge(q.questionType)}
                   >
                     {q.questionType || "Input"}
                   </span>
@@ -171,7 +187,7 @@ export function Sidebar({
               data-cy="add-question-button"
               onClick={() => onAddQuestion(currentLevel)}
               disabled={levelQuestions.some((q) => !q.question?.trim())}
-              className="w-full px-3 py-2 rounded-lg font-medium text-gray-600 bg-gray-50 border border-gray-200 hover:bg-gray-100 hover:text-gray-700 hover:border-gray-300 transition-all duration-150 flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gray-50 disabled:hover:text-gray-600 disabled:hover:border-gray-200"
+              className={getClassNames.addButton}
             >
               <Plus size={16} />
               <span>Add Question</span>

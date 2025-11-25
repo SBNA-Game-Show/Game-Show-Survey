@@ -1,7 +1,6 @@
 import React, { useRef, useState, useEffect } from "react";
-import { Volume2, VolumeX, Loader2 } from "lucide-react";
+import { Volume2, VolumeX, Loader2, CircleCheck, X } from "lucide-react";
 import { API_BASE, API_KEY } from "../api/config";
-import ProficiencyModal from "../common/ProficiencyModal";
 
 interface UserQuestionCardProps {
   questions: any[];
@@ -307,7 +306,6 @@ const UserQuestionCard: React.FC<UserQuestionCardProps> = ({
             {!showPreviewDialog ? questions[index]?.questionLevel : proficiency}{" "}
             Level
           </span>
-          
         </div>
 
         {!showPreviewDialog && (
@@ -445,9 +443,11 @@ const UserQuestionCard: React.FC<UserQuestionCardProps> = ({
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row justify-center item-stretch gap-3 sm:gap-4">
               <button
-              data-cy={index === questions.length - 1 
-                  ? "review-answers-button" 
-                    : "save-continue-button"} 
+                data-cy={
+                  index === questions.length - 1
+                    ? "review-answers-button"
+                    : "save-continue-button"
+                }
                 onClick={onSaveNext}
                 disabled={submitting || recording}
                 className={`w-full sm:w-auto px-6 sm:px-8 py-3 bg-gradient-to-r from-user-btn-save-from to-user-btn-save-to text-white rounded-xl sm:rounded-2xl font-semibold hover:from-user-btn-save-hover-from hover:to-user-btn-save-hover-to transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 ${
@@ -483,19 +483,7 @@ const UserQuestionCard: React.FC<UserQuestionCardProps> = ({
             <div className="flex flex-col sm:flex-row items-center justify-between mb-4 gap-2">
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 bg-gradient-to-r from-header-primary to-accent rounded-full flex items-center justify-center">
-                  <svg
-                    className="w-4 h-4 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
+                  <CircleCheck className="w-4 h-4 text-white" />
                 </div>
                 <h3 className="text-base sm:text-lg font-bold text-user-preview-title">
                   Survey Complete!
@@ -506,19 +494,7 @@ const UserQuestionCard: React.FC<UserQuestionCardProps> = ({
                 disabled={submitting}
                 className="text-gray-400 hover:text-gray-600 transition-colors duration-200 disabled:opacity-50"
               >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
+                <X className="w-5 h-5" />
               </button>
             </div>
 
@@ -552,7 +528,7 @@ const UserQuestionCard: React.FC<UserQuestionCardProps> = ({
 
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
               <button
-                             onClick={onPublish}
+                onClick={onPublish}
                 disabled={submitting}
                 data-cy="submit-survey"
                 className="flex-1 px-3 sm:px-4 py-2 bg-gradient-to-r from-user-preview-submit-from to-user-preview-submit-to text-white rounded-lg sm:rounded-xl font-semibold text-xs sm:text-sm hover:shadow-lg"

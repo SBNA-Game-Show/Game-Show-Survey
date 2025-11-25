@@ -2,8 +2,12 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Question } from "../../types/types";
-import { fetchAllQuestionsAndAnswersAdmin, updateQuestionWithAnswers } from "../api/adminSurveyApi";
+import {
+  fetchAllQuestionsAndAnswersAdmin,
+  updateQuestionWithAnswers,
+} from "../api/adminSurveyApi";
 import { useAnalyticsData } from "../hooks/useAnalyticsData";
+import { X, Check } from "lucide-react";
 
 const ResponsesPage: React.FC = () => {
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -17,11 +21,15 @@ const ResponsesPage: React.FC = () => {
   const [filterLevel, setFilterLevel] = useState("");
   const [sortField, setSortField] = useState<string>("");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
-  
+
   // State for answer validation modal
   const [showAnswerModal, setShowAnswerModal] = useState(false);
-  const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);
-  const [updatingAnswers, setUpdatingAnswers] = useState<Set<string>>(new Set());
+  const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(
+    null
+  );
+  const [updatingAnswers, setUpdatingAnswers] = useState<Set<string>>(
+    new Set()
+  );
 
   const navigate = useNavigate();
 
@@ -81,36 +89,41 @@ const ResponsesPage: React.FC = () => {
   // Function to handle answer validation button click
   const handleValidateAnswers = (question: Question) => {
     // Only allow validation for Input type questions that have answers
-    if (question.questionType === "Input" && question.answers && question.answers.length > 0) {
+    if (
+      question.questionType === "Input" &&
+      question.answers &&
+      question.answers.length > 0
+    ) {
       setSelectedQuestion(question);
       setShowAnswerModal(true);
     }
   };
 
   // Function to update answer isCorrect status
-  const handleUpdateAnswerCorrectness = async (answerIndex: number, isCorrect: boolean) => {
+  const handleUpdateAnswerCorrectness = async (
+    answerIndex: number,
+    isCorrect: boolean
+  ) => {
     if (!selectedQuestion) return;
 
     const answerKey = `${selectedQuestion.questionID}-${answerIndex}`;
-    setUpdatingAnswers(prev => new Set(prev).add(answerKey));
+    setUpdatingAnswers((prev) => new Set(prev).add(answerKey));
 
     try {
       // Create a copy of the question with only the specific answer's isCorrect field updated
       const updatedQuestion: Question = {
         ...selectedQuestion,
-        answers: selectedQuestion.answers!.map((answer, index) => 
-          index === answerIndex 
-            ? { ...answer, isCorrect } 
-            : answer
-        )
+        answers: selectedQuestion.answers!.map((answer, index) =>
+          index === answerIndex ? { ...answer, isCorrect } : answer
+        ),
       };
 
       // Use existing updateQuestionWithAnswers method
       await updateQuestionWithAnswers(updatedQuestion);
 
       // Update local state
-      setQuestions(prevQuestions => 
-        prevQuestions.map(q => 
+      setQuestions((prevQuestions) =>
+        prevQuestions.map((q) =>
           q.questionID === selectedQuestion.questionID ? updatedQuestion : q
         )
       );
@@ -118,12 +131,16 @@ const ResponsesPage: React.FC = () => {
       // Update selected question for modal
       setSelectedQuestion(updatedQuestion);
 
-      console.log(`✅ Answer ${answerIndex + 1} marked as ${isCorrect ? 'correct' : 'incorrect'}`);
+      console.log(
+        `✅ Answer ${answerIndex + 1} marked as ${
+          isCorrect ? "correct" : "incorrect"
+        }`
+      );
     } catch (error: any) {
-      console.error('❌ Failed to update answer correctness:', error);
+      console.error("❌ Failed to update answer correctness:", error);
       setError(`Failed to update answer: ${error.message}`);
     } finally {
-      setUpdatingAnswers(prev => {
+      setUpdatingAnswers((prev) => {
         const newSet = new Set(prev);
         newSet.delete(answerKey);
         return newSet;
@@ -330,32 +347,31 @@ const ResponsesPage: React.FC = () => {
     <div className="min-h-screen bg-responses-bg p-6 space-y-6">
       <div className="flex-shrink-0 p-6 pb-0">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-  <h2 className="text-3xl sm:text-4xl font-bold text-[var(--header-primary)] text-center sm:text-left">
-    Survey Responses
-  </h2>
+          <h2 className="text-3xl sm:text-4xl font-bold text-[var(--header-primary)] text-center sm:text-left">
+            Survey Responses
+          </h2>
 
-  <div className="flex flex-wrap justify-center sm:justify-end gap-1">
-    <button
-      className="bg-button-refresh-responses-back px-4 py-2 rounded text-sm font-medium hover:opacity-90 transition"
-      onClick={handleRefresh}
-    >
-      🔄 Refresh
-    </button>
-    <button
-      onClick={() => navigate("/analytics")}
-      className="bg-button-refresh-responses-back px-4 py-2 rounded text-sm font-medium hover:opacity-90 transition"
-    >
-      📈 Analytics
-    </button>
-    <button
-      className="bg-button-refresh-responses-back px-4 py-2 rounded text-sm font-medium hover:opacity-90 transition"
-      onClick={() => navigate("/dashboard")}
-    >
-      ← Back
-    </button>
-  </div>
-</div>
-
+          <div className="flex flex-wrap justify-center sm:justify-end gap-1">
+            <button
+              className="bg-button-refresh-responses-back px-4 py-2 rounded text-sm font-medium hover:opacity-90 transition"
+              onClick={handleRefresh}
+            >
+              🔄 Refresh
+            </button>
+            <button
+              onClick={() => navigate("/analytics")}
+              className="bg-button-refresh-responses-back px-4 py-2 rounded text-sm font-medium hover:opacity-90 transition"
+            >
+              📈 Analytics
+            </button>
+            <button
+              className="bg-button-refresh-responses-back px-4 py-2 rounded text-sm font-medium hover:opacity-90 transition"
+              onClick={() => navigate("/dashboard")}
+            >
+              ← Back
+            </button>
+          </div>
+        </div>
 
         <div className="mb-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -632,7 +648,9 @@ const ResponsesPage: React.FC = () => {
                           {totalQ}
                         </td>
                         <td className="px-3 py-2">
-                          {q.questionType === "Input" && q.answers && q.answers.length > 0 ? (
+                          {q.questionType === "Input" &&
+                          q.answers &&
+                          q.answers.length > 0 ? (
                             <button
                               onClick={() => handleValidateAnswers(q)}
                               className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium hover:bg-green-200 transition-colors"
@@ -658,31 +676,35 @@ const ResponsesPage: React.FC = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[80vh] flex flex-col">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-              <h2 className="text-xl font-bold text-gray-900">Validate Answers</h2>
+              <h2 className="text-xl font-bold text-gray-900">
+                Validate Answers
+              </h2>
               <button
                 onClick={() => setShowAnswerModal(false)}
                 className="text-gray-500 hover:text-gray-700 transition-colors"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <X className="w-6 h-6" />
               </button>
             </div>
-            
+
             <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-800 mb-2">Question:</h3>
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                Question:
+              </h3>
               <p className="text-gray-700">{selectedQuestion.question}</p>
               <div className="flex gap-2 mt-2">
                 <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
                   {selectedQuestion.questionCategory}
                 </span>
-                <span className={`px-2 py-1 rounded-full text-xs ${
-                  selectedQuestion.questionLevel === "Beginner"
-                    ? "bg-green-100 text-green-800"
-                    : selectedQuestion.questionLevel === "Intermediate"
-                    ? "bg-yellow-100 text-yellow-800"
-                    : "bg-red-100 text-red-800"
-                }`}>
+                <span
+                  className={`px-2 py-1 rounded-full text-xs ${
+                    selectedQuestion.questionLevel === "Beginner"
+                      ? "bg-green-100 text-green-800"
+                      : selectedQuestion.questionLevel === "Intermediate"
+                      ? "bg-yellow-100 text-yellow-800"
+                      : "bg-red-100 text-red-800"
+                  }`}
+                >
                   {selectedQuestion.questionLevel}
                 </span>
               </div>
@@ -692,19 +714,20 @@ const ResponsesPage: React.FC = () => {
               <h4 className="text-md font-semibold text-gray-800 mb-4">
                 Answers ({selectedQuestion.answers?.length || 0})
               </h4>
-              
-              {selectedQuestion.answers && selectedQuestion.answers.length > 0 ? (
+
+              {selectedQuestion.answers &&
+              selectedQuestion.answers.length > 0 ? (
                 <div className="space-y-3">
                   {selectedQuestion.answers.map((answer, index) => {
                     const answerKey = `${selectedQuestion.questionID}-${index}`;
                     const isUpdating = updatingAnswers.has(answerKey);
-                    
+
                     return (
                       <div
                         key={answer.answerID || `answer-${index}`}
                         className={`p-4 border rounded-lg transition-all ${
-                          answer.isCorrect 
-                            ? "border-green-200 bg-green-50" 
+                          answer.isCorrect
+                            ? "border-green-200 bg-green-50"
                             : "border-gray-200 bg-gray-50"
                         }`}
                       >
@@ -719,28 +742,30 @@ const ResponsesPage: React.FC = () => {
                                   {answer.responseCount} responses
                                 </span>
                               )}
-                              
+
                               {/* NEW: Display rank and score if available */}
-                              {answer.rank !== undefined && answer.rank !== null && (
-                                <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
-                                  Rank #{answer.rank}
-                                </span>
-                              )}
-                              {answer.score !== undefined && answer.score !== null && (
-                                <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-medium">
-                                  Score: {answer.score}
-                                </span>
-                              )}
+                              {answer.rank !== undefined &&
+                                answer.rank !== null && (
+                                  <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                                    Rank #{answer.rank}
+                                  </span>
+                                )}
+                              {answer.score !== undefined &&
+                                answer.score !== null && (
+                                  <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-medium">
+                                    Score: {answer.score}
+                                  </span>
+                                )}
                             </div>
-                            <p className="text-gray-800 break-words">{answer.answer}</p>
+                            <p className="text-gray-800 break-words">
+                              {answer.answer}
+                            </p>
                           </div>
-                          
+
                           <div className="flex items-center gap-2 flex-shrink-0">
                             {answer.isCorrect ? (
                               <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium flex items-center gap-1">
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                </svg>
+                                <Check className="w-4 h-4" />
                                 True
                               </span>
                             ) : (
@@ -748,10 +773,12 @@ const ResponsesPage: React.FC = () => {
                                 False
                               </span>
                             )}
-                            
+
                             <div className="flex gap-1">
                               <button
-                                onClick={() => handleUpdateAnswerCorrectness(index, true)}
+                                onClick={() =>
+                                  handleUpdateAnswerCorrectness(index, true)
+                                }
                                 disabled={isUpdating}
                                 className={`p-2 rounded-lg transition-all ${
                                   answer.isCorrect
@@ -763,14 +790,14 @@ const ResponsesPage: React.FC = () => {
                                 {isUpdating ? (
                                   <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
                                 ) : (
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                  </svg>
+                                  <Check className="w-4 h-4" />
                                 )}
                               </button>
-                              
+
                               <button
-                                onClick={() => handleUpdateAnswerCorrectness(index, false)}
+                                onClick={() =>
+                                  handleUpdateAnswerCorrectness(index, false)
+                                }
                                 disabled={isUpdating}
                                 className={`p-2 rounded-lg transition-all ${
                                   !answer.isCorrect
@@ -782,9 +809,7 @@ const ResponsesPage: React.FC = () => {
                                 {isUpdating ? (
                                   <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
                                 ) : (
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                  </svg>
+                                  <X className="w-4 h-4" />
                                 )}
                               </button>
                             </div>
@@ -796,8 +821,18 @@ const ResponsesPage: React.FC = () => {
                 </div>
               ) : (
                 <div className="text-center py-8 text-gray-500">
-                  <svg className="w-12 h-12 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <svg
+                    className="w-12 h-12 mx-auto mb-4 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8 12h.01M12 12h.01M16 12h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
                   </svg>
                   <p>No answers available for this question.</p>
                 </div>
@@ -807,10 +842,15 @@ const ResponsesPage: React.FC = () => {
             <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
               <div className="flex items-center justify-between">
                 <div className="text-sm text-gray-600">
-                  <span className="font-medium">Instructions:</span> Click the green checkmark to mark an answer as correct, or the red X to mark it as incorrect.
-                  {selectedQuestion.answers?.some(a => a.rank !== undefined || a.score !== undefined) && (
+                  <span className="font-medium">Instructions:</span> Click the
+                  green checkmark to mark an answer as correct, or the red X to
+                  mark it as incorrect.
+                  {selectedQuestion.answers?.some(
+                    (a) => a.rank !== undefined || a.score !== undefined
+                  ) && (
                     <span className="block mt-1 text-xs">
-                      💡 Rank and Score values are fetched from your database and displayed above.
+                      💡 Rank and Score values are fetched from your database
+                      and displayed above.
                     </span>
                   )}
                 </div>

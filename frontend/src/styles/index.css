@@ -21,7 +21,7 @@
   --warning: #f14c11;
 
   /* Survey Layout colours */
-  --survey-bg: #f5c800;
+  --survey-bg: #f5f5dc;
 
   /* Header specific colors */
   --header-bg: #f2d2b6;
@@ -93,26 +93,26 @@
   --question-bank-text: #000000;
 
   /* Login page, Proficiency modal specific colors */
-  --login-bg: #ffec97;
+  --login-bg: #f5f5dc;
   --login-card-bg: #ffffff;
   --login-active-text: #ffffff;
   --login-nonactive-text: #656565;
   --login-nonactive-bg: #ededed;
-  --login-primary: #ff4500;
+  --login-primary: #ff4f0e;
   --login-input-border: #9a9a9a;
   --login-checkbox-border: #9a9a9a;
-  --login-focus-border: #ff4500;
+  --login-focus-border: #ff4f0e;
   --login-checkbox-text: #000000;
-  --login-button-bg: #ff4500;
+  --login-button-bg: #ff4f0e;
   --login-button-hover: #f5c800;
   --login-button-text: #ffffff;
-  --login-error-text: #ff4500;
+  --login-error-text: #ff4f0e;
   --login-error-bg: #f4e792;
   --login-error-border: #ff0000;
   --login-welcome-text: #000000;
 
   /* Proficiency modal specific colors */
-  --proficiency-bg: #ffec97;
+  --proficiency-bg: #f5f5dc;
   --proficiency-card-bg: #ffffff;
   --proficiency-primary: #ff4500;
   --proficiency-active-text: #ffffff;
@@ -122,7 +122,7 @@
   --proficiency-confirm-text: #ffffff;
 
   /*Not found page*/
-  --notfound-bg: #ffec97;
+  --notfound-bg: #f5f5dc;
   --notfound-primary: #ff4500;
   --notfound-hover: #f5c800;
   --notfound-text: #000000;
@@ -150,13 +150,14 @@
   --update-cancel-text: #000000;
 
   /* Analytics Page */
-  --analytics-bg: #f5c800;
+  --analytics-bg: #f5f5dc;
   --button-refresh-responses-back: #ff4500;
   --responses-bg: #f5c800;
   --questiondetails-bg:#f5c800;
+  --responses-bg: #f5f5dc;
 
   /* Admin database connection lost */
-  --adminlost-bg: #f5c800;
+  --adminlost-bg: #f5f5dc;
   --adminlost-connection-issue: #ff0000;
   --adminlost-card-bg: #ffffff;
   --adminlost-icon: #ff4500;
@@ -225,7 +226,7 @@
   --user-transcribing-border: #f5c800;
 
   /* User Survey Page specific colors */
-  --user-survey-bg: #ffec97;
+  --user-survey-bg: #f5f5dc;
   --user-survey-loading-spinner-border: #f2d2b6;
   --user-survey-loading-spinner-top: #ff4500;
   --user-survey-loading-text: #000000;
@@ -249,6 +250,7 @@
   --user-survey-btn-ok-success-hover: #f39800;
   --user-survey-btn-ok-error: #dc2626;
   --user-survey-btn-ok-error-hover: #b91c1c;
+  
 
   /* Sidebar specific colors */
   --sb-bg: #ffffff;

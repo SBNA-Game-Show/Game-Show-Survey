@@ -6,6 +6,7 @@ import {
 } from "../api/adminSurveyApi";
 import { useParams, useNavigate } from "react-router-dom";
 import { Question } from "../../types/types";
+import { CircleAlert, CircleQuestionMark, Info, X, Check } from "lucide-react";
 
 interface Answer {
   answerID: string;
@@ -21,10 +22,16 @@ const QuestionDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortBy, setSortBy] = useState<"frequency" | "length" | "alphabetical">("frequency");
-  const [updatingAnswers, setUpdatingAnswers] = useState<Set<string>>(new Set());
+  const [sortBy, setSortBy] = useState<"frequency" | "length" | "alphabetical">(
+    "frequency"
+  );
+  const [updatingAnswers, setUpdatingAnswers] = useState<Set<string>>(
+    new Set()
+  );
   const [updateError, setUpdateError] = useState<string>("");
-  const [toast, setToast] = useState<{ id: number; message: string } | null>(null);
+  const [toast, setToast] = useState<{ id: number; message: string } | null>(
+    null
+  );
 
   const navigate = useNavigate();
 
@@ -72,13 +79,19 @@ const QuestionDetailPage: React.FC = () => {
     return () => clearTimeout(t);
   }, [toast]);
 
-  const handleUpdateAnswerCorrectness = async (answerText: string, isCorrect: boolean) => {
+  const handleUpdateAnswerCorrectness = async (
+    answerText: string,
+    isCorrect: boolean
+  ) => {
     if (!question) return;
-    setUpdatingAnswers(prev => new Set(prev).add(answerText));
+    setUpdatingAnswers((prev) => new Set(prev).add(answerText));
     setUpdateError("");
     try {
-      const answerIndex = question.answers?.findIndex(a => a.answer === answerText);
-      if (answerIndex === undefined || answerIndex === -1) throw new Error("Answer not found in question");
+      const answerIndex = question.answers?.findIndex(
+        (a) => a.answer === answerText
+      );
+      if (answerIndex === undefined || answerIndex === -1)
+        throw new Error("Answer not found in question");
       const updatedQuestion: Question = {
         ...question,
         answers: question.answers!.map((ans, index) => {
@@ -87,17 +100,20 @@ const QuestionDetailPage: React.FC = () => {
             return { ...ans, isCorrect: false, rank: 0, score: 0 };
           }
           return { ...ans, isCorrect: true };
-        })
+        }),
       };
       await updateQuestionWithAnswers(updatedQuestion);
       setQuestion(updatedQuestion);
       if (!isCorrect) {
-        setToast({ id: Date.now(), message: `Reset rank & score for "${answerText}"` });
+        setToast({
+          id: Date.now(),
+          message: `Reset rank & score for "${answerText}"`,
+        });
       }
     } catch (error: any) {
       setUpdateError(`Failed to update answer: ${error.message}`);
     } finally {
-      setUpdatingAnswers(prev => {
+      setUpdatingAnswers((prev) => {
         const newSet = new Set(prev);
         newSet.delete(answerText);
         return newSet;
@@ -138,7 +154,9 @@ const QuestionDetailPage: React.FC = () => {
   }, [answerFrequencies, searchTerm, sortBy]);
 
   const answerStats = useMemo(() => {
-    const answerTexts = answers.map((a) => a.answer).filter((text) => text.trim() !== "");
+    const answerTexts = answers
+      .map((a) => a.answer)
+      .filter((text) => text.trim() !== "");
     const uniqueAnswers = [...new Set(answerTexts)];
     return {
       totalAnswers: answerTexts.length,
@@ -149,12 +167,12 @@ const QuestionDetailPage: React.FC = () => {
   // UI rendering logic
   if (loading) {
     return (
-<div className="min-h-screen bg-yellow-400 p-6">
-      <div className="p-6">
+      <div className="min-h-screen bg-survey-bg p-6">
+        <div className="p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold">Question Details</h2>
             <button
-              className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
+              className="bg-button-refresh-responses-back text-white px-4 py-2 rounded hover:bg-purple-700"
               onClick={() => navigate(-1)}
             >
               ← Back
@@ -180,7 +198,7 @@ const QuestionDetailPage: React.FC = () => {
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold">Question Details</h2>
             <button
-              className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
+              className="bg-button-refresh-responses-back text-white px-4 py-2 rounded hover:bg-purple-700"
               onClick={() => navigate(-1)}
             >
               ← Back
@@ -189,19 +207,7 @@ const QuestionDetailPage: React.FC = () => {
           <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
             <div className="text-red-600 mb-4">
               <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <svg
-                  className="w-6 h-6 text-red-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
+                <CircleAlert className="w-6 h-6 text-red-600" />
               </div>
               <p className="text-lg font-semibold">
                 Error loading question details
@@ -221,58 +227,46 @@ const QuestionDetailPage: React.FC = () => {
   }
 
   if (!question || answers.length === 0) {
-  return (
-    <div className="min-h-screen bg-yellow-50">
-      <div className="p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-yellow-900">Question Details</h2>
-          <button
-            className="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700 transition-colors"
-            onClick={() => navigate(-1)}
-          >
-            ← Back
-          </button>
-        </div>
-        <div className="bg-yellow-100 border border-yellow-200 rounded-lg p-6 text-center">
-          <div className="w-16 h-16 bg-yellow-200 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg
-              className="w-8 h-8 text-yellow-700"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+    return (
+      <div className="min-h-screen bg-yellow-50">
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-yellow-900">
+              Question Details
+            </h2>
+            <button
+              className="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700 transition-colors"
+              onClick={() => navigate(-1)}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
+              ← Back
+            </button>
           </div>
-          <h3 className="text-xl font-semibold text-yellow-900 mb-2">
-            No Responses Found
-          </h3>
-          <p className="text-yellow-800 mb-4">
-            {question
-              ? "This question hasn't received any responses yet."
-              : "Question not found in the database."}
-          </p>
-          <button
-            onClick={() => navigate("/responses")}
-            className="bg-yellow-600 text-white px-6 py-2 rounded-lg hover:bg-yellow-700 transition-colors"
-          >
-            View All Questions
-          </button>
+          <div className="bg-yellow-100 border border-yellow-200 rounded-lg p-6 text-center">
+            <div className="w-16 h-16 bg-yellow-200 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CircleQuestionMark className="w-8 h-8 text-yellow-800" />
+            </div>
+            <h3 className="text-xl font-semibold text-yellow-900 mb-2">
+              No Responses Found
+            </h3>
+            <p className="text-yellow-800 mb-4">
+              {question
+                ? "This question hasn't received any responses yet."
+                : "Question not found in the database."}
+            </p>
+            <button
+              onClick={() => navigate("/responses")}
+              className="bg-yellow-600 text-white px-6 py-2 rounded-lg hover:bg-yellow-700 transition-colors"
+            >
+              View All Questions
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  );
-}
-
+    );
+  }
 
   return (
-<div className="min-h-screen bg-yellow-400">
-
+    <div className="min-h-screen bg-survey-bg">
       <div className="p-6 space-y-6">
         {/* Toast */}
         {toast && (
@@ -281,32 +275,25 @@ const QuestionDetailPage: React.FC = () => {
             aria-live="polite"
             className="fixed bottom-6 right-6 z-50 bg-gray-900 text-white px-5 py-4 rounded-lg shadow-lg flex items-start gap-3 animate-fade-in"
           >
-            <svg className="w-6 h-6 text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
-            </svg>
+            <Info className="w-6 h-6 flex-shrink-0" />
             <div className="text-sm font-medium">{toast.message}</div>
             <button
               onClick={() => setToast(null)}
               className="ml-2 text-gray-300 hover:text-white"
               title="Dismiss"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <X className="w-5 h-5" />
             </button>
           </div>
         )}
 
         {/* Header */}
 
-
         {/* <div className="min-h-screen bg-yellow-50">
            <div className="p-6">
           <div className="flex justify-between items-center mb-6"> */}
 
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-
-
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
           <div>
             <h2 className="text-3xl sm:text-4xl font-bold text-[var(--header-primary)] text-center sm:text-left">
               Question Analysis
@@ -316,24 +303,18 @@ const QuestionDetailPage: React.FC = () => {
             </p>
           </div>
           <div className="flex gap-2">
-            <button
-              className="bg-button-refresh-responses-back px-4 py-2 rounded text-sm font-medium hover:opacity-90 transition"
-
-            >
+            <button className="bg-button-refresh-responses-back px-4 py-2 rounded text-sm font-medium hover:opacity-90 transition">
               🔄 Refresh
             </button>
             <button
-            className="bg-button-refresh-responses-back px-4 py-2 rounded text-sm font-medium hover:opacity-90 transition"
-
+              className="bg-button-refresh-responses-back px-4 py-2 rounded text-sm font-medium hover:opacity-90 transition"
               // className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-lg"
               onClick={() => navigate(-1)}
             >
               ← Back
             </button>
           </div>
-          
-    
-          </div>
+        </div>
 
         {/* Question Info Card */}
         <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
@@ -391,17 +372,13 @@ const QuestionDetailPage: React.FC = () => {
         {updateError && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
             <div className="flex items-center gap-2">
-              <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+              <CircleAlert className="w-6 h-6 text-red-600" />
               <p className="text-red-700 text-lg font-medium">{updateError}</p>
               <button
                 onClick={() => setUpdateError("")}
                 className="ml-auto text-red-600 hover:text-red-800"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <X className="w-6 h-6" />
               </button>
             </div>
           </div>
@@ -458,7 +435,9 @@ const QuestionDetailPage: React.FC = () => {
               <ul className="divide-y divide-gray-200">
                 {filteredAnswers.map(([answer, count], idx) => {
                   const isUpdating = updatingAnswers.has(answer);
-                  const questionAnswer = question.answers?.find(a => a.answer === answer);
+                  const questionAnswer = question.answers?.find(
+                    (a) => a.answer === answer
+                  );
                   const isCorrect = questionAnswer?.isCorrect || false;
                   return (
                     <li
@@ -467,50 +446,63 @@ const QuestionDetailPage: React.FC = () => {
                     >
                       <div className="flex justify-between items-start">
                         <div className="flex-1 min-w-0">
-                          <p className="text-gray-900 break-words text-2xl font-bold">{answer}</p>
+                          <p className="text-gray-900 break-words text-2xl font-bold">
+                            {answer}
+                          </p>
                           <div className="flex flex-col md:flex-row md:items-center justify-between mt-4">
                             <div className="flex flex-wrap gap-4 items-center text-lg font-medium">
                               <span className="text-gray-600">
-                                Length: <span className="text-black">{answer.length} characters</span>
+                                Length:{" "}
+                                <span className="text-black">
+                                  {answer.length} characters
+                                </span>
                               </span>
                               {questionAnswer && (
                                 <>
-                                  {questionAnswer.rank !== undefined && questionAnswer.rank !== null && (
-                                    <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full font-bold text-base">
-                                      Rank: #{questionAnswer.rank}
-                                    </span>
-                                  )}
-                                  {questionAnswer.score !== undefined && questionAnswer.score !== null && (
-                                    <span className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full font-bold text-base">
-                                      Score: {questionAnswer.score}
-                                    </span>
-                                  )}
+                                  {questionAnswer.rank !== undefined &&
+                                    questionAnswer.rank !== null && (
+                                      <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full font-bold text-base">
+                                        Rank: #{questionAnswer.rank}
+                                      </span>
+                                    )}
+                                  {questionAnswer.score !== undefined &&
+                                    questionAnswer.score !== null && (
+                                      <span className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full font-bold text-base">
+                                        Score: {questionAnswer.score}
+                                      </span>
+                                    )}
                                 </>
                               )}
                             </div>
                             <div className="flex items-center gap-3 mt-4 md:mt-0 ml-2">
-                              <span className={`px-4 py-2 rounded-full font-bold text-lg shadow ${isCorrect ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                              <span
+                                className={`px-4 py-2 rounded-full font-bold text-lg shadow ${
+                                  isCorrect
+                                    ? "bg-green-100 text-green-700"
+                                    : "bg-red-100 text-red-700"
+                                }`}
+                              >
                                 {isCorrect ? "Correct" : "Incorrect"}
                               </span>
                               <button
-                                onClick={() => handleUpdateAnswerCorrectness(answer, true)}
+                                onClick={() =>
+                                  handleUpdateAnswerCorrectness(answer, true)
+                                }
                                 disabled={isUpdating}
                                 className="flex items-center justify-center px-3 py-2 rounded-full border border-green-200 text-green-700 bg-green-50 hover:bg-green-200 transition disabled:opacity-50 disabled:cursor-not-allowed text-2xl"
                                 title="Mark as correct"
                               >
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                </svg>
+                                <Check className="w-6 h-6" />
                               </button>
                               <button
-                                onClick={() => handleUpdateAnswerCorrectness(answer, false)}
+                                onClick={() =>
+                                  handleUpdateAnswerCorrectness(answer, false)
+                                }
                                 disabled={isUpdating}
                                 className="flex items-center justify-center px-3 py-2 rounded-full border border-red-200 text-red-700 bg-red-50 hover:bg-red-200 transition disabled:opacity-50 disabled:cursor-not-allowed text-2xl"
                                 title="Mark as incorrect"
                               >
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
+                                <X className="w-6 h-6" />
                               </button>
                             </div>
                           </div>

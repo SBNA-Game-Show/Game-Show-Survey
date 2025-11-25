@@ -1,6 +1,6 @@
 // Updated QuestionCard.tsx - Removed unused Plus import and fixed other issues
-import React, { useState } from "react";
-import { X, Check } from "lucide-react"; // Removed unused Plus import
+import { useState } from "react";
+import { X, Check, Plus } from "lucide-react";
 import { Question } from "../../types/types";
 
 const categories = [
@@ -81,17 +81,9 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
     onUpdate("answers", updated);
   };
 
-  const handleDeleteClick = () => {
-    setShowDeleteDialog(true);
-  };
-
-  const handleConfirmDelete = () => {
+  const handleDelete = (confirm: boolean) => {
     setShowDeleteDialog(false);
-    onDelete();
-  };
-
-  const handleCancelDelete = () => {
-    setShowDeleteDialog(false);
+    if (confirm) onDelete();
   };
 
   const isCategorySelected = () => !!question.questionCategory?.trim();
@@ -121,25 +113,13 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                 className="p-2 rounded-lg transition-colors text-green-600 hover:bg-green-100 hover:text-green-700 flex items-center gap-1 text-sm font-medium"
                 title="Add another question"
               >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                  />
-                </svg>
+                <Plus size={16} />
                 Add
               </button>
             )}
             <button
               data-cy="delete-question-button"
-              onClick={handleDeleteClick}
+              onClick={() => setShowDeleteDialog(true)}
               className="p-2 rounded-lg transition-colors bg-btn-delete-question-bg text-btn-delete-question-text hover:bg-btn-delete-question-hover-bg hover:text-btn-delete-question-hover-text"
               title="Delete this question"
             >
@@ -338,14 +318,14 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
             <div className="flex gap-3">
               <button
                 data-cy="cancel-delete-question-button"
-                onClick={handleCancelDelete}
+                onClick={() => handleDelete(false)}
                 className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
               >
                 Cancel
               </button>
               <button
                 data-cy="confirm-delete-question-button"
-                onClick={handleConfirmDelete}
+                onClick={() => handleDelete(true)}
                 className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
               >
                 Delete

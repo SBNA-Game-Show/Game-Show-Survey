@@ -1,8 +1,9 @@
 // Updated Header.tsx - Improved colors, text clarity, and layout spacing
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import LogoutPrompt from "../common/LogoutPrompt";
 import UpdatePrompt from "../common/UpdateConfirmPrompt";
+import { Plus } from "lucide-react";
 
 interface HeaderProps {
   completedCount: number;
@@ -17,9 +18,29 @@ interface HeaderProps {
   onLogout(): void;
 }
 
+const getButtonClasses = (
+  variant: "mode" | "nav" | "action" | "logout",
+  isActive = false
+) => {
+  const base =
+    "flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-200";
+
+  const variants = {
+    mode: isActive
+      ? "bg-secondary text-btn-active-text border-accent shadow-md px-6 py-2.5 font-semibold shadow-sm border"
+      : "bg-secondary-light text-btn-inactive-text border-accent hover:bg-btn-inactive-hover-bg hover:border-btn-inactive-hover-border px-6 py-2.5 font-semibold shadow-sm border",
+    nav: "border hover:opacity-90",
+    action:
+      "px-5 py-2.5 font-semibold shadow-md disabled:bg-gray-300 disabled:cursor-not-allowed",
+    logout:
+      "bg-btn-logout-bg text-btn-logout-text border border-red-200 hover:bg-btn-logout-hover-bg hover:border-btn-logout-hover-border",
+  };
+
+  return `${base} ${variants[variant]}`;
+};
+
 export const Header: React.FC<HeaderProps> = ({
   completedCount,
-  totalCount,
   mode,
   onPreview,
   onCreateNew,
@@ -33,22 +54,44 @@ export const Header: React.FC<HeaderProps> = ({
   const [showLogoutPrompt, setShowLogoutPrompt] = useState(false);
   const [showUpdatePrompt, setShowUpdatePrompt] = useState(false);
 
-  const handleLogoutClick = () => setShowLogoutPrompt(true);
-  const handleConfirmLogout = () => {
+  const handleLogout = (confirm: boolean) => {
     setShowLogoutPrompt(false);
-    onLogout();
+    if (confirm) onLogout();
   };
-  const handleCancelLogout = () => setShowLogoutPrompt(false);
 
-  // Update popup logic - now for batch operations only
-  const handleUpdateClick = () => setShowUpdatePrompt(true);
-  const handleConfirmUpdate = () => {
+  const handleUpdate = (confirm: boolean) => {
     setShowUpdatePrompt(false);
-    onUpdate();
+    if (confirm) onUpdate();
   };
-  const handleCancelUpdate = () => setShowUpdatePrompt(false);
 
   const rankingPageUrl = process.env.REACT_APP_RANKING_UI_URL;
+
+  const navButtons = [
+    {
+      icon: "📊",
+      "data-cy": "analytics-button",
+      label: "Analytics",
+      onClick: () => navigate("/analytics"),
+      className:
+        "text-btn-analytics-text bg-btn-analytics-bg border-indigo-200 hover:bg-btn-analytics-hover-bg",
+    },
+    {
+      icon: "🏆",
+      "data-cy": "ranking-page-button",
+      label: "Ranking Page",
+      onClick: () => window.open(rankingPageUrl, "_blank"),
+      className:
+        "text-btn-ranking-text bg-btn-ranking-bg border-orange-200 hover:bg-btn-ranking-hover-bg",
+    },
+    {
+      icon: "👁️",
+      "data-cy": "preview-button",
+      label: "Preview",
+      onClick: onPreview,
+      className:
+        "text-btn-preview-text bg-btn-preview-bg border-purple-200 hover:bg-btn-preview-hover-bg",
+    },
+  ];
 
   return (
     <>
@@ -78,37 +121,17 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 data-cy="add-header-button"
                 onClick={onSwitchToCreate}
-                className={`px-6 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2 shadow-sm border transition-all duration-200 ${
-                  mode === "create"
-                    ? "bg-secondary text-btn-active-text border-accent shadow-md"
-                    : "bg-secondary-light text-btn-inactive-text border-accent hover:bg-btn-inactive-hover-bg hover:border-btn-inactive-hover-border"
-                }`}
+                className={getButtonClasses("mode", mode === "create")}
               >
                 <span className="text-base ">
-                  <svg
-                    className="w-6 h-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                    />
-                  </svg>
+                  <Plus size={16} />
                 </span>
                 <span>Add</span>
               </button>
               <button
                 data-cy="edit-header-button"
                 onClick={onSwitchToEdit}
-                className={`px-6 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2 shadow-sm border transition-all duration-200 ${
-                  mode === "edit"
-                    ? "bg-secondary text-btn-active-text border-accent shadow-md"
-                    : "bg-secondary-light text-btn-inactive-text border-accent hover:bg-blue-50 hover:border-blue-300"
-                }`}
+                className={getButtonClasses("mode", mode === "edit")}
               >
                 <span className="text-base">✏️</span>
                 <span>Edit</span>
@@ -118,29 +141,17 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Right: Navigation & Action Buttons */}
             <div className="flex items-center gap-3">
               {/* Navigation Buttons */}
-              <button
-                onClick={() => navigate("/analytics")}
-                className="flex items-center gap-2 px-4 py-2.5 text-btn-analytics-text bg-btn-analytics-bg border border-indigo-200 rounded-lg hover:bg-btn-analytics-hover-bg hover:border-btn-analytics-hover-border transition-all duration-200 font-medium text-sm"
-              >
-                <span className="text-base">📊</span>
-                <span>Analytics</span>
-              </button>
-
-              <button
-                onClick={() => window.open(rankingPageUrl, "_blank")}
-                className="flex items-center gap-2 px-4 py-2.5 text-btn-ranking-text bg-btn-ranking-bg border border-orange-200 rounded-lg hover:bg-btn-ranking-hover-bg hover:border-btn-ranking-hover-border transition-all duration-200 font-medium text-sm"
-              >
-                <span className="text-base">🏆</span>
-                <span>Ranking Page</span>
-              </button>
-
-              <button
-                onClick={onPreview}
-                className="flex items-center gap-2 px-4 py-2.5 text-btn-preview-text bg-btn-preview-bg border border-purple-200 rounded-lg hover:bg-btn-preview-hover-bg hover:border-btn-preview-hover-border transition-all duration-200 font-medium text-sm"
-              >
-                <span className="text-base">👁️</span>
-                <span>Preview</span>
-              </button>
+              {navButtons.map((btn, idx) => (
+                <button
+                  key={idx}
+                  data-cy={btn["data-cy"]}
+                  onClick={btn.onClick}
+                  className={`${getButtonClasses("nav")} ${btn.className}`}
+                >
+                  <span className="text-base">{btn.icon}</span>
+                  <span>{btn.label}</span>
+                </button>
+              ))}
 
               {/* Action Button */}
               {mode === "create" ? (
@@ -148,7 +159,9 @@ export const Header: React.FC<HeaderProps> = ({
                   data-cy="save-questions-button"
                   onClick={onCreateNew}
                   disabled={isSubmitting || completedCount === 0}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-btn-save-questions-bg text-btn-save-questions-text rounded-lg hover:bg-btn-save-questions-hover-bg disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200 font-semibold text-sm shadow-md"
+                  className={`${getButtonClasses(
+                    "action"
+                  )} bg-btn-save-questions-bg text-btn-save-questions-text hover:bg-btn-save-questions-hover-bg`}
                 >
                   <span className="text-base">💾</span>
                   <span>{isSubmitting ? "Creating..." : "Save Questions"}</span>
@@ -156,9 +169,11 @@ export const Header: React.FC<HeaderProps> = ({
               ) : (
                 <button
                   data-cy="save-changes-button"
-                  onClick={handleUpdateClick}
+                  onClick={() => setShowUpdatePrompt(true)}
                   disabled={isSubmitting || completedCount === 0}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-btn-save-changes-bg text-btn-save-changes-text rounded-lg hover:bg-btn-save-changes-hover-bg disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200 font-semibold text-sm shadow-md"
+                  className={`${getButtonClasses(
+                    "action"
+                  )} bg-btn-save-changes-bg text-btn-save-changes-text hover:bg-btn-save-changes-hover-bg`}
                 >
                   <span className="text-base">🔄</span>
                   <span>{isSubmitting ? "Updating..." : "Save Changes"}</span>
@@ -168,8 +183,8 @@ export const Header: React.FC<HeaderProps> = ({
               {/* Logout Button - Right Corner */}
               <button
                 data-cy="logout-button"
-                onClick={handleLogoutClick}
-                className="flex items-center gap-2 px-4 py-2.5 bg-btn-logout-bg text-btn-logout-text border border-red-200 rounded-lg hover:bg-btn-logout-hover-bg hover:border-btn-logout-hover-border transition-all duration-200 font-medium text-sm"
+                onClick={() => setShowLogoutPrompt(true)}
+                className={getButtonClasses("logout")}
               >
                 <span className="text-base">🚪</span>
                 <span>Logout</span>
@@ -185,14 +200,14 @@ export const Header: React.FC<HeaderProps> = ({
       {/* LOGOUT MODAL */}
       <LogoutPrompt
         show={showLogoutPrompt}
-        onConfirm={handleConfirmLogout}
-        onCancel={handleCancelLogout}
+        onConfirm={() => handleLogout(true)}
+        onCancel={() => handleLogout(false)}
       />
       {/* BATCH UPDATE MODAL */}
       <UpdatePrompt
         show={showUpdatePrompt}
-        onConfirm={handleConfirmUpdate}
-        onCancel={handleCancelUpdate}
+        onConfirm={() => handleUpdate(true)}
+        onCancel={() => handleUpdate(false)}
       />
     </>
   );

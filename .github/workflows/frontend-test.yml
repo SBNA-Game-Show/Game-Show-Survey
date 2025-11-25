@@ -1,10 +1,10 @@
 name: 🔁 Cypress E2E Tests
 
-#on:
-  #push:
-    #branches: Master
-  #pull_request:
-    #branches: main
+on:
+  push:
+    branches: main
+  pull_request:
+    branches: main
 
 concurrency:
   group: cypress-${{ github.ref }}
@@ -12,6 +12,7 @@ concurrency:
 
 jobs:
   cypress-run:
+    name: cypress-test
     runs-on: ubuntu-latest
 
     defaults:
@@ -54,6 +55,7 @@ jobs:
         working-directory: backend
         env:
           NODE_ENV: development
+          DB_NAME: Data_Jimmy_Test
 
       - name: ⏳ Wait for frontend to be ready
         run: npx wait-on http://localhost:3000 --timeout 120000
@@ -64,5 +66,5 @@ jobs:
           working-directory: frontend
           install: false
           config-file: cypress.config.js
-          wait-on: 'http://localhost:3000'
+          wait-on: "http://localhost:3000"
           wait-on-timeout: 120

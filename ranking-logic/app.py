@@ -933,6 +933,11 @@ def health():
     status_code = 500 if result["status"] == "error" else 200
     return jsonify(result), status_code
 
+##@app.route('/api/health')
+##def health():
+    # Fast, deterministic, no external calls
+    ##return jsonify(status="ok"), 200
+
 @app.route('/api/test-connection')
 def test_connection():
     """Test API connection"""

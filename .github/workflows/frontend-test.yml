@@ -86,6 +86,16 @@ jobs:
           config-file: cypress.config.js
           wait-on: "http://localhost:3000"
           wait-on-timeout: 120
+          spec: |
+            cypress/e2e/01-questions/create-question.cy.ts,
+            cypress/e2e/01-questions/edit-questions.cy.ts,
+            cypress/e2e/02-admin/admin-login.cy.ts,
+            cypress/e2e/03-ranking/ranking.cy.ts,
+            cypress/e2e/04-user/beginner.cy.ts,
+            cypress/e2e/04-user/intermediate.cy.ts,
+            cypress/e2e/04-user/advanced.cy.ts,
+            cypress/e2e/05-outdated-tests/responses.cy.ts,
+            cypress/e2e/06-delete/delete-questions.cy.ts
 
   sync-release-branch:
     name: Sync release-branch with main & deploy to Render

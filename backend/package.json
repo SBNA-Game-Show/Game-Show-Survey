@@ -4,12 +4,15 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon --watch .env -r dotenv/config --experimental-json-modules src/index.js"
+    "dev": "nodemon --watch .env -r dotenv/config --experimental-json-modules src/index.js",
+    "start": "node -r dotenv/config src/index.js",
+    "start:testdb": "cross-env DB_NAME=Data_Jimmy_Test node -r dotenv/config src/index.js"
   },
   "author": "Anmol",
   "license": "ISC",
   "devDependencies": {
     "@gradio/client": "^1.15.5",
+    "cross-env": "^10.1.0",
     "dotenv": "^17.2.3",
     "nodemon": "^3.1.10",
     "prettier": "^3.5.3"

@@ -54,7 +54,7 @@ jobs:
         working-directory: backend
 
       - name: 🚀 Start backend server
-        run: npm run dev &
+        run: npm run start:testdb &
         working-directory: backend
         env:
           NODE_ENV: development

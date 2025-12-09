@@ -1,10 +1,13 @@
 name: 🔁 Cypress E2E Tests
 
-#on:
-  #push:
-    #branches: Master
-  #pull_request:
-    #branches: main
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: write   # allow pushing to other branches
 
 concurrency:
   group: cypress-${{ github.ref }}
@@ -12,6 +15,7 @@ concurrency:
 
 jobs:
   cypress-run:
+    name: cypress-test
     runs-on: ubuntu-latest
 
     defaults:
@@ -50,13 +54,29 @@ jobs:
         working-directory: backend
 
       - name: 🚀 Start backend server
-        run: npm run dev &
+        run: npm run start:testdb &
         working-directory: backend
         env:
           NODE_ENV: development
+          DB_NAME: Data_Jimmy_Test
 
-      - name: ⏳ Wait for frontend to be ready
-        run: npx wait-on http://localhost:3000 --timeout 120000
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 📦 Install ranking-logic dependencies
+        working-directory: ranking-logic
+        run: pip install -r requirements.txt
+
+      - name: 🚀 Start ranking-logic service
+        working-directory: ranking-logic
+        run: python app.py &
+        env:
+          FLASK_ENV: development
+
+      - name: ⏳ Wait for frontend and ranking to be ready
+        run: npx wait-on http://localhost:3000 http://localhost:5000 --timeout 120000
 
       - name: 🧪 Run Cypress tests
         uses: cypress-io/github-action@v6
@@ -64,5 +84,50 @@ jobs:
           working-directory: frontend
           install: false
           config-file: cypress.config.js
-          wait-on: 'http://localhost:3000'
+          wait-on: "http://localhost:3000"
           wait-on-timeout: 120
+          spec: |
+            cypress/e2e/01-questions/create-question.cy.ts,
+            cypress/e2e/01-questions/edit-questions.cy.ts,
+            cypress/e2e/02-admin/admin-login.cy.ts,
+            cypress/e2e/03-ranking/ranking.cy.ts,
+            cypress/e2e/04-user/beginner.cy.ts,
+            cypress/e2e/04-user/intermediate.cy.ts,
+            cypress/e2e/04-user/advanced.cy.ts,
+            cypress/e2e/05-outdated-tests/responses.cy.ts,
+            cypress/e2e/06-delete/delete-questions.cy.ts
+
+  sync-release-branch:
+    name: Sync release-branch with main & deploy to Render
+    needs: cypress-run
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🧾 Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: 🔄 Force mirror main → release-branch
+        run: |
+          git fetch origin main
+          git checkout main
+          git reset --hard origin/main
+          # Force push so release-branch ALWAYS == main
+          git push origin main:release-branch --force
+
+      - name: 🚀 Trigger Render deploy for Survey
+        run: curl -X POST "$SURVEY_RENDER_DEPLOY_HOOK_URL"
+        env:
+          SURVEY_RENDER_DEPLOY_HOOK_URL: ${{ secrets.SURVEY_RENDER_DEPLOY_HOOK_URL }}
+
+      - name: 🚀 Trigger Render deploy for Ranking
+        run: curl -X POST "$RANKING_RENDER_DEPLOY_HOOK_URL"
+        env:
+          RANKING_RENDER_DEPLOY_HOOK_URL: ${{ secrets.RANKING_RENDER_DEPLOY_HOOK_URL }}

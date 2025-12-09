@@ -1,5 +1,5 @@
 // Updated SurveyPage.tsx - Fixed useEffect dependency warnings
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAdminSurveyApi } from "../hooks/useAdminSurveyApi";
 import SurveyLayout from "./SurveyLayout";
@@ -104,7 +104,7 @@ const SurveyPage: React.FC = () => {
     if (q1.questionLevel !== q2.questionLevel) return false;
 
     // Compare answers for MCQ questions
-    if (q1.questionType === "Mcq" || q2.questionType === "Mcq") {
+    if (q1.questionType === "MCQ" || q2.questionType === "MCQ") {
       const a1 = q1.answers || [];
       const a2 = q2.answers || [];
 

@@ -68,10 +68,10 @@ async function addQuestions(questions, collection) {
     throw new ApiError(400, "Question must not be an empty Array");
   }
 
-  // Step 2: Initialize a list to store valid (non-duplicate) questions
   let validQuestions = [];
+
   for (const q of questions) {
-    const {
+    let {
       question,
       questionType,
       questionCategory,
@@ -81,28 +81,50 @@ async function addQuestions(questions, collection) {
       answers,
     } = q;
 
+    // ── Normalize type ────────────────────────────────────────────────
+    const rawType = (questionType || "").trim();        // e.g. "Mcq", "MCQ", "Input"
+    const normalizedType = rawType.toUpperCase();       // e.g. "MCQ", "INPUT"
+
+    // Values from constants (these must match your schema enum)
+    const mcqConst = QUESTION_TYPE.MCQ;      // "MCQ"
+    const inputConst = QUESTION_TYPE.INPUT;  // "Input"
+
+    const isMcq =
+      normalizedType === "MCQ" || rawType === mcqConst;
+    const isInput =
+      normalizedType === "INPUT" || rawType === inputConst;
+
+    // 👇 This is what we actually save into Mongo
+    let canonicalType = rawType;
+    if (isMcq) {
+      canonicalType = mcqConst;     // => "MCQ"
+    } else if (isInput) {
+      canonicalType = inputConst;   // => "Input"
+    }
+
     // Step 3: Check for missing required fields
     if (
-      [question, questionCategory, questionLevel, questionType].some(
-        (field) => !field || field.trim() === ""
+      [question, questionCategory, questionLevel, canonicalType].some(
+        (field) => !field || field.toString().trim() === ""
       )
     ) {
       throw new ApiError(400, "All fields are required for every question");
     }
-    if (questionType === QUESTION_TYPE.MCQ) {
-      if (!Array.isArray(answers) || answers.length != 4) {
+
+    // ── MCQ validation ───────────────────────────────────────────────
+    if (isMcq) {
+      if (!Array.isArray(answers) || answers.length !== 4) {
         throw new ApiError(
-          "400",
+          400,
           "Question Type of MCQ must have 4 Answer options along with it"
         );
       }
-      //  Check that exactly one answer is marked correct
+
       const correctAnswers = answers.filter((a) => a.isCorrect === true);
       if (correctAnswers.length !== 1) {
         throw new ApiError(400, "MCQ must have exactly one correct answer");
       }
 
-      // Check each answer is non-empty
       const hasEmptyAnswer = answers.some(
         (a) => !a.answer || a.answer.trim() === ""
       );
@@ -110,20 +132,21 @@ async function addQuestions(questions, collection) {
         throw new ApiError(400, "Each MCQ answer must have non-empty text");
       }
 
-      //  Ensure no duplicate answers
       const answerTexts = answers.map((a) => a.answer.toLowerCase().trim());
-      const hasDuplicates = new Set(answerTexts).size !== answerTexts.length;
+      const hasDuplicates =
+        new Set(answerTexts).size !== answerTexts.length;
       if (hasDuplicates) {
         throw new ApiError(400, "MCQ answer options must be unique");
       }
     }
 
     // Step 4: Normalize question text to avoid case-based duplicates
-    const normalizedQuestion = question.toLowerCase().trim();
+    const normalizedQuestion = (question || "").toLowerCase().trim();
+
     // Step 5: Check if the question already exists in the DB
     const alreadyExists = await collection.findOne({
       question: normalizedQuestion,
-      questionType,
+      questionType: canonicalType,   // ✅ use canonicalType
       questionCategory,
       questionLevel,
     });
@@ -135,52 +158,51 @@ async function addQuestions(questions, collection) {
         question: normalizedQuestion,
         questionCategory,
         questionLevel,
-        questionType,
+        questionType: canonicalType, // ✅ "MCQ" or "Input"
         timesSkipped,
         timesAnswered,
       };
 
-      // Only attach answers if it's FINALQUESTION collection
+      // ── FINALQUESTION collection ───────────────────────────────────
       if (collection === SCHEMA_MODELS.FINALQUESTION) {
-        // For INPUT type questions, keep only correct answers
         let filteredAnswers = [];
-        if (questionType === QUESTION_TYPE.INPUT) {
-          if (answers.length < 3) {
+
+        if (isInput) {
+          if (!Array.isArray(answers) || answers.length < 1) {
             throw new ApiError(
               400,
-              "Input Questions must have atleast 3 valid answers"
+              "Input Questions must have at least 1 valid answer"
             );
           }
-          filteredAnswers = answers.filter((a) => {
-            return a.isCorrect === true;
-          });
-        }
-        if (filteredAnswers.length <  3) {
-          throw new ApiError(
-            400,
-            "There should be exactly 3 Correct Answers for Input Type Questions"
-          );
-        }
-        // For MCQ type, keep all provided answers
-        if (questionType === QUESTION_TYPE.MCQ) {
-          filteredAnswers = answers;
+
+          filteredAnswers = answers.filter((a) => a.isCorrect === true);
+
+          if (filteredAnswers.length < 1) {
+            throw new ApiError(
+              400,
+              "Input type questions must have at least 1 correct answer"
+            );
+          }
+        } else if (isMcq) {
+          filteredAnswers = answers || [];
+        } else {
+          filteredAnswers = answers || [];
         }
 
-        // Map filtered answers to desired structure with UUIDs
         newQuestion.answers = filteredAnswers.map((a) => ({
           answer: a.answer,
           _id: uuidv4(),
           isCorrect: a.isCorrect,
-          responseCount: a.responseCount,
-          rank: a.rank,
-          score: a.score,
+          responseCount: a.responseCount ?? 0,
+          rank: a.rank ?? 0,
+          score: a.score ?? 0,
         }));
       }
 
-      // Handle regular QUESTION collection with MCQ type
+      // ── QUESTION collection MCQs (for survey taking) ───────────────
       if (
         collection === SCHEMA_MODELS.QUESTION &&
-        questionType === QUESTION_TYPE.MCQ &&
+        isMcq &&
         Array.isArray(answers)
       ) {
         newQuestion.answers = answers.map((a) => ({
@@ -208,6 +230,8 @@ async function addQuestions(questions, collection) {
 
   return insertedQuestions;
 }
+
+
 
 async function updateQuestionById(questionsData, collection) {
   if (!Array.isArray(questionsData) || questionsData.length === 0) {
@@ -277,8 +301,8 @@ async function updateQuestionById(questionsData, collection) {
       // INPUT questions must have exactly one correct answer
       if (questionType === QUESTION_TYPE.INPUT) {
         const correctAnswers = answers.filter((a) => a.isCorrect === true);
-        if (correctAnswers.length < 3) {
-          throw new ApiError(400, "Must have 3 answers set to Correct");
+        if (correctAnswers.length < 1) {
+          throw new ApiError(400, "Must have atleast 1 correct answer set to Correct");
         }
       }
     }

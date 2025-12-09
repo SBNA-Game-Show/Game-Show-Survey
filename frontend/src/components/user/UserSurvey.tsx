@@ -5,6 +5,7 @@ import ProficiencyModal from "../common/ProficiencyModal";
 import LogoutPrompt from "../common/LogoutPrompt";
 import UserSidebar from "./UserSidebar";
 import UserQuestionCard from "./UserQuestionCard";
+import { X, Check } from "lucide-react";
 
 const UserSurvey: React.FC = () => {
   const navigate = useNavigate();
@@ -274,35 +275,11 @@ const UserSurvey: React.FC = () => {
             <div className="w-12 h-12 mx-auto mb-4 rounded-full flex items-center justify-center">
               {isSuccessPopup ? (
                 <div className="w-12 h-12 bg-user-survey-popup-success-bg rounded-full flex items-center justify-center">
-                  <svg
-                    className="w-6 h-6 text-user-survey-popup-success-icon"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
+                  <Check className="w-6 h-6 text-user-survey-popup-success-icon" />
                 </div>
               ) : (
                 <div className="w-12 h-12 bg-user-survey-popup-error-bg rounded-full flex items-center justify-center">
-                  <svg
-                    className="w-6 h-6 text-user-survey-popup-error-icon"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
+                  <X className="w-6 h-6 text-user-survey-popup-error-icon" />
                 </div>
               )}
             </div>

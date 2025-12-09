@@ -155,8 +155,8 @@ class QuestionValidator:
         # Check for at least 3 correct answers
         correct_answers = [a for a in answers if a.get(AnswerFields.IS_CORRECT, False)]
         
-        if len(correct_answers) < 3:
-            return False, f"Input question needs at least 3 correct answers, found {len(correct_answers)}"
+        if len(correct_answers) < 1:
+            return False, f"Input question needs at least 1 correct answer, found {len(correct_answers)}"
         
         return True, "Valid Input question"
 
@@ -235,43 +235,52 @@ class FinalService:
     def _filter_and_process_questions(self, main_questions: List[Dict]) -> Dict:
         """Filter and process questions for final endpoint"""
         questions_to_post = []
-        skipped_mcq = 0
+        skipped_mcq = 0          
         skipped_insufficient = 0
-        
+
         for question in main_questions:
             question_id = QuestionFormatter.get_question_id(question)
-            question_type = question.get(QuestionFields.QUESTION_TYPE, '').lower()
-            
-            # Skip MCQ questions
-            if question_type == 'mcq':
-                logger.debug(f"⏭️ Skipping MCQ question {question_id}")
-                skipped_mcq += 1
+            question_type = (question.get(QuestionFields.QUESTION_TYPE) or "").lower()
+
+            #MCQ: send directly to finalQuestions without ranking/validation
+            if question_type == "mcq":
+                logger.debug(f"✅ Passing MCQ question {question_id} directly to final")
+                questions_to_post.append(question)
+                # we *do* stay inside the loop, just move to next question
                 continue
-            
-            # Validate question for final endpoint
+
+            #Validate Input questions for final endpoint
             is_valid, validation_msg = self.validator.validate_question_for_final(question)
-            
+
             if not is_valid:
-                if "at least 3 correct answers" in validation_msg:
+                if "at least" in validation_msg.lower():
                     logger.error(f"❌ Question {question_id}: {validation_msg}")
                     skipped_insufficient += 1
                 else:
                     logger.debug(f"⏭️ Question {question_id}: {validation_msg}")
                 continue
-            
-            # Filter to only correct answers
+
+            #Filter to only correct answers for Input questions
             filtered_question = self.answer_filter.filter_answers_for_final(question)
             questions_to_post.append(filtered_question)
-            
-            logger.debug(f"✅ Question {question_id} ready for POST ({len(filtered_question[QuestionFields.ANSWERS])} correct answers)")
-        
-        logger.info(f"📊 Final POST analysis: {len(questions_to_post)} to post, {skipped_mcq} MCQ skipped, {skipped_insufficient} insufficient answers")
-        
+
+            logger.debug(
+                f"✅ Question {question_id} ready for POST "
+                f"({len(filtered_question[QuestionFields.ANSWERS])} correct answers)"
+            )
+
+        logger.info(
+            f"📊 Final POST analysis: {len(questions_to_post)} to post, "
+            f"{skipped_mcq} MCQ skipped, {skipped_insufficient} insufficient answers"
+        )
+
         return {
-            'questions_to_post': questions_to_post,
-            'skipped_mcq': skipped_mcq,
-            'skipped_insufficient': skipped_insufficient
+            "questions_to_post": questions_to_post,
+            "skipped_mcq": skipped_mcq,
+            "skipped_insufficient": skipped_insufficient,
         }
+
+
     
     def _create_result_with_deletion(self, filter_result: Dict, post_success: bool, posted_count: int, deleted_count: int, delete_success: bool) -> Dict:
         """Create result dictionary including deletion information"""

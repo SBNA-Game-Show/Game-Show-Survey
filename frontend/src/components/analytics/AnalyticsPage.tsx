@@ -37,7 +37,7 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({
 }) => {
   const navigate = useNavigate();
   const [questions, setQuestions] = useState<Question[]>([]);
-  // eslint-disable-next-line 
+  // eslint-disable-next-line
   const [answers, setAnswers] = useState<Answer[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
@@ -149,36 +149,35 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({
   };
 
   // Header
-  
-const renderHeader = () => (
-  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-2">
-    <h2 className="text-3xl font-bold text-[var(--header-primary)]">
-      Survey Analytics Dashboard
-    </h2>
 
-    <div className="flex flex-wrap justify-start sm:justify-end gap-2 w-full sm:w-auto">
-      <button
-        className="bg-button-refresh-responses-back px-3 py-2 rounded text-sm hover:opacity-90 transition"
-        onClick={handleRefresh}
-      >
-        🔄 Refresh
-      </button>
-      <button
-        onClick={() => navigate("/responses")}
-        className="bg-button-refresh-responses-back text-white px-4 py-2 rounded hover:opacity-90 transition"
-      >
-        📋 Responses
-      </button>
-      <button
-        className="bg-button-refresh-responses-back text-white px-4 py-2 rounded hover:opacity-90 transition"
-        onClick={() => navigate("/dashboard")}
-      >
-        ← Back
-      </button>
+  const renderHeader = () => (
+    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-2">
+      <h2 className="text-3xl font-bold text-[var(--header-primary)]">
+        Survey Analytics Dashboard
+      </h2>
+
+      <div className="flex flex-wrap justify-start sm:justify-end gap-2 w-full sm:w-auto">
+        <button
+          className="bg-button-refresh-responses-back px-3 py-2 rounded text-sm hover:opacity-90 transition"
+          onClick={handleRefresh}
+        >
+          🔄 Refresh
+        </button>
+        <button
+          onClick={() => navigate("/responses")}
+          className="bg-button-refresh-responses-back text-white px-4 py-2 rounded hover:opacity-90 transition"
+        >
+          📋 Responses
+        </button>
+        <button
+          className="bg-button-refresh-responses-back text-white px-4 py-2 rounded hover:opacity-90 transition"
+          onClick={() => navigate("/dashboard")}
+        >
+          ← Back
+        </button>
+      </div>
     </div>
-  </div>
-);
-
+  );
 
   if (loading) {
     return (

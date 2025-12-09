@@ -8,7 +8,7 @@
 
 // Enums for question Type
 export const QUESTION_TYPE = Object.freeze({
-  MCQ: "Mcq",
+  MCQ: "MCQ",
   INPUT: "Input",
 });
 

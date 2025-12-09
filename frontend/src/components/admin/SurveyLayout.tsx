@@ -1,10 +1,11 @@
-import React, { memo } from "react";
+import { memo } from "react";
 import { Sidebar } from "./Sidebar";
 import QuestionCard from "./QuestionCard";
 import { PreviewModal } from "./PreviewModal";
 import { Header } from "./Header";
 import ErrorAlert from "../common/ErrorAlert";
 import { Question } from "../../types/types";
+import { Plus } from "lucide-react";
 
 const LEVELS = ["Beginner", "Intermediate", "Advanced"] as const;
 type Level = (typeof LEVELS)[number];
@@ -114,19 +115,7 @@ function SurveyLayout({
               <div className="bg-white rounded-2xl shadow border border-gray-100 p-12 text-center h-full flex items-center justify-center">
                 <div>
                   <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg
-                      className="w-8 h-8 text-purple-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                      />
-                    </svg>
+                    <Plus className="w-8 h-8 text-purple-600" />
                   </div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">
                     No Questions Yet
